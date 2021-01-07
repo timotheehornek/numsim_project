@@ -9,15 +9,19 @@ re = 1000             # Reynolds number
 gX = 0.0              # external forces, set to (gX,gY) = (0,-9.81) to account for gravity
 gY = 0.0
 
-# Dirichlet boundary conditions
-dirichletBottomX = 0
-dirichletBottomY = 0
-dirichletTopX    = 1
-dirichletTopY    = 0
-dirichletLeftX   = 0
-dirichletLeftY   = 0
-dirichletRightX  = 0
-dirichletRightY  = 0
+# Boundary conditions
+useDirichletBcBottom = true
+useDirichletBcTop    = true
+useDirichletBcLeft   = true
+useDirichletBcRight  = true
+bottomX = 0
+bottomY = 0
+topX    = 1
+topY    = 0
+leftX   = 0
+leftY   = 0
+rightX  = 0
+rightY  = 0
 
 # Discretization parameters
 nCellsX = 20          # number of cells in x and y direction

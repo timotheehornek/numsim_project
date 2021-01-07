@@ -92,64 +92,146 @@ const std::array<int, 2> &Discretization::nCells() const
 }
 
 void Discretization::setup_bound_val_uv(
-	const std::array<double, 2> &dirichletBcBottom, const std::array<double, 2> &dirichletBcTop,
-	const std::array<double, 2> &dirichletBcLeft, const std::array<double, 2> &dirichletBcRight)
+	const std::array<double, 2> &bcBottom, const std::array<double, 2> &bcTop,
+	const std::array<double, 2> &bcLeft, const std::array<double, 2> &bcRight,
+	const std::array<bool, 4> &useDirichletBc)
 {
+	enum SIDES
+	{
+		BOTTOM,
+		TOP,
+		LEFT,
+		RIGHT
+	};
+
+	// bottom
+	if (useDirichletBc[BOTTOM]) //< Dirichlet
+	{
+		for (int i{1}; i < m_u.x_max() - 1; ++i)
+			m_u(i, 0) = 2 * bcBottom[0] - m_u(i, 1);
+		for (int i{0}; i < m_v.x_max(); ++i)
+			m_v(i, 0) = bcBottom[1];
+	}
+	else //< Neumann
+	{
+		//m_v(i, 0) = - bcBottom[1] * m_dy;
+	}
+	//####################
+	//HIER WEITERMACHEN
+
+	// top
+	if (useDirichletBc[BOTTOM])
+
 	//! set u
 	for (int j{0}; j < m_u.y_max(); ++j)
 	{
 		//! left boundary
-		m_u(0, j) = dirichletBcLeft[0];
+		m_u(0, j) = bcLeft[0];
 		//! right boundary
-		m_u(m_u.x_max() - 1, j) = dirichletBcRight[0];
+		m_u(m_u.x_max() - 1, j) = bcRight[0];
 	}
 	for (int i{1}; i < m_u.x_max() - 1; ++i)
 	{
 		//! bottom boundary
-		m_u(i, 0) = 2 * dirichletBcBottom[0] - m_u(i, 1);
+		m_u(i, 0) = 2 * bcBottom[0] - m_u(i, 1);
 		//! top boundary
-		m_u(i, m_u.y_max() - 1) = 2 * dirichletBcTop[0] - m_u(i, m_u.y_max() - 2);
+		m_u(i, m_u.y_max() - 1) = 2 * bcTop[0] - m_u(i, m_u.y_max() - 2);
 	}
 
 	//! set v
 	for (int j{1}; j < m_v.y_max() - 1; ++j)
 	{
 		//! left boundary
-		m_v(0, j) = 2 * dirichletBcLeft[1] - m_v(1, j);
+		m_v(0, j) = 2 * bcLeft[1] - m_v(1, j);
 		//! right boundary
-		m_v(m_v.x_max() - 1, j) = 2 * dirichletBcRight[1] - m_v(m_v.x_max() - 2, j);
+		m_v(m_v.x_max() - 1, j) = 2 * bcRight[1] - m_v(m_v.x_max() - 2, j);
 	}
 	for (int i{0}; i < m_v.x_max(); ++i)
 	{
 		// bottom boundary
-		m_v(i, 0) = dirichletBcBottom[1];
+		m_v(i, 0) = bcBottom[1];
 		// top boundary
-		m_v(i, m_v.y_max() - 1) = dirichletBcTop[1];
+		m_v(i, m_v.y_max() - 1) = bcTop[1];
 	}
 }
 
 void Discretization::update_bound_val_uv(
-	const std::array<double, 2> &dirichletBcBottom, const std::array<double, 2> &dirichletBcTop,
-	const std::array<double, 2> &dirichletBcLeft, const std::array<double, 2> &dirichletBcRight)
+	const std::array<double, 2> &bcBottom, const std::array<double, 2> &bcTop,
+	const std::array<double, 2> &bcLeft, const std::array<double, 2> &bcRight,
+	const std::array<bool, 4> &useDirichletBc)
 {
-	// only the bondary values that depend on inner u,v are updated
+	enum SIDES
+	{
+		BOTTOM,
+		TOP,
+		LEFT,
+		RIGHT
+	};
+
+	// bottom
+	if (useDirichletBc[BOTTOM]) //< Dirichlet
+		for (int i{1}; i < m_u.x_max() - 1; ++i)
+			m_u(i, 0) = 2 * bcBottom[0] - m_u(i, 1);
+	else //< Neumann
+		for (int i{1}; i < m_u.x_max() - 1; ++i)
+		{
+			m_u(i, 0) = m_u(i, 1);
+			m_v(i, 0) = m_v(i, 1) - bcBottom[1] * m_dy;
+		}
+
+	// top
+	if (useDirichletBc[TOP]) //< Dirichlet
+		for (int i{1}; i < m_u.x_max() - 1; ++i)
+			m_u(i, m_u.y_max() - 1) = 2 * bcTop[0] - m_u(i, m_u.y_max() - 2);
+	else //< Neumann
+		for (int i{1}; i < m_u.x_max() - 1; ++i)
+		{
+			m_u(i, m_u.y_max() - 1) = m_u(i, m_u.y_max() - 2);
+			m_v(i, m_u.y_max() - 1) = m_v(i, m_u.y_max() - 2) + bcTop[1] * m_dy;
+		}
+
+	// left
+	if (useDirichletBc[LEFT]) //< Dirichlet
+		for (int j{0}; j < m_v.y_max(); ++j)
+			m_v(0, j) = 2 * bcLeft[1] - m_v(1, j);
+	else //< Neumann
+		for (int j{0}; j < m_v.y_max(); ++j)
+		{
+			m_v(0, j) = m_v(1, j);
+			m_u(0, j) = m_u(1, j) - bcLeft[0] * m_dx;
+		}
+
+	// right
+	if (useDirichletBc[RIGHT]) //< Dirichlet
+		for (int j{0}; j < m_v.y_max(); ++j)
+			m_v(m_v.x_max() - 1, j) = 2 * bcRight[1] - m_v(m_v.x_max() - 2, j);
+	else //< Neumann
+		for (int j{0}; j < m_v.y_max(); ++j)
+		{
+			m_v(m_v.x_max() - 1, j) = m_v(m_v.x_max() - 2, j);
+			m_u(m_v.x_max() - 1, j) = m_u(m_v.x_max() - 2, j) + bcRight[0] * m_dx;
+		}
+
+	/*
+	// only the boundary values that depend on inner u,v are updated
 	// update u
 	for (int i{1}; i < m_u.x_max() - 1; ++i)
 	{
 		// bottom boundary
-		m_u(i, 0) = 2 * dirichletBcBottom[0] - m_u(i, 1);
+		m_u(i, 0) = 2 * bcBottom[0] - m_u(i, 1); //ok
 		// top boundary
-		m_u(i, m_u.y_max() - 1) = 2 * dirichletBcTop[0] - m_u(i, m_u.y_max() - 2);
+		m_u(i, m_u.y_max() - 1) = 2 * bcTop[0] - m_u(i, m_u.y_max() - 2);
 	}
 
 	// update v
 	for (int j{0}; j < m_v.y_max(); ++j)
 	{
 		// left boundary
-		m_v(0, j) = 2 * dirichletBcLeft[1] - m_v(1, j);
+		m_v(0, j) = 2 * bcLeft[1] - m_v(1, j);
 		// right boundary
-		m_v(m_v.x_max() - 1, j) = 2 * dirichletBcRight[1] - m_v(m_v.x_max() - 2, j);
+		m_v(m_v.x_max() - 1, j) = 2 * bcRight[1] - m_v(m_v.x_max() - 2, j);
 	}
+	*/
 }
 
 void Discretization::compute_bound_val_FG()

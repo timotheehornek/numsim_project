@@ -7,7 +7,6 @@
 #include <cmath>
 #include <iostream>
 
-
 class Discretization
 {
 protected:
@@ -18,10 +17,10 @@ protected:
 	Staggered_grid m_G;
 	Staggered_grid m_RHS;
 
-	double m_dt{ 0.0 }; //< run set_dt to initialize
+	double m_dt{0.0}; //< run set_dt to initialize
 	const double m_dx;
 	const double m_dy;
-	
+
 	const double m_re;
 
 	const std::array<double, 2> m_g;
@@ -29,10 +28,8 @@ protected:
 	const std::array<int, 2> m_nCells;
 
 public:
-
 	//! construct the object with given number of cells in x and y direction
-	Discretization(const std::array<int, 2>& nCells, const std::array<double, 2>& physicalSize, const double re, const std::array<double, 2>& g);
-
+	Discretization(const std::array<int, 2> &nCells, const std::array<double, 2> &physicalSize, const double re, const std::array<double, 2> &g);
 
 	//! set dt checking stability conditions
 	void set_dt(double dt_max, double sec_factor);
@@ -43,25 +40,26 @@ public:
 	double dt() const;
 	double dx() const;
 	double dy() const;
-	const Staggered_grid& u() const;
-	const Staggered_grid& v() const;
-	const Staggered_grid& p() const;
-	const Staggered_grid& F() const;
-	const Staggered_grid& G() const;
-	const Staggered_grid& RHS() const;
-	Staggered_grid& p_ref();			//< return p by non-const reference
-	const std::array<int, 2>& nCells() const;
-
+	const Staggered_grid &u() const;
+	const Staggered_grid &v() const;
+	const Staggered_grid &p() const;
+	const Staggered_grid &F() const;
+	const Staggered_grid &G() const;
+	const Staggered_grid &RHS() const;
+	Staggered_grid &p_ref(); //< return p by non-const reference
+	const std::array<int, 2> &nCells() const;
 
 	//! sets up boundary using boundary conditions of u,v around domain
 	void setup_bound_val_uv(
-		const std::array<double, 2>& dirichletBcBottom, const std::array<double, 2>& dirichletBcTop,
-		const std::array<double, 2>& dirichletBcLeft, const std::array<double, 2>& dirichletBcRight);
+		const std::array<double, 2> &bcBottom, const std::array<double, 2> &bcTop,
+		const std::array<double, 2> &bcLeft, const std::array<double, 2> &bcRight,
+		const std::array<bool, 4> &useDirichletBc);
 
 	//! computes and updates boundary using boundary conditions of u,v around domain
 	void update_bound_val_uv(
-		const std::array<double, 2>& dirichletBcBottom, const std::array<double, 2>& dirichletBcTop,
-		const std::array<double, 2>& dirichletBcLeft, const std::array<double, 2>& dirichletBcRight);
+		const std::array<double, 2> &bcBottom, const std::array<double, 2> &bcTop,
+		const std::array<double, 2> &bcLeft, const std::array<double, 2> &bcRight,
+		const std::array<bool, 4> &useDirichletBc);
 
 	//! compute and update boundary values of F and G
 	void compute_bound_val_FG();
@@ -74,7 +72,6 @@ public:
 
 	//compute and update u and v
 	void compute_uv();
-
 
 	// compute the 1st derivative ∂ p / ∂x
 	virtual double compute_dp_dx(int i, int j) const = 0;
@@ -90,7 +87,6 @@ public:
 
 	// compute the 1st derivative ∂ (uv) / ∂y
 	virtual double compute_duv_dy(int i, int j) const = 0;
-
 
 	// compute the 1st derivative ∂ p / ∂y
 	virtual double compute_dp_dy(int i, int j) const = 0;

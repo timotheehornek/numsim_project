@@ -52,8 +52,9 @@ int main(int argc, char *argv[])
 
     //! load boundaries for velocities u and v
     discretization->setup_bound_val_uv(
-        settings.dirichletBcBottom, settings.dirichletBcTop,
-        settings.dirichletBcLeft, settings.dirichletBcRight);
+        settings.bcBottom, settings.bcTop,
+        settings.bcLeft, settings.bcRight,
+        settings.useDirichletBc);
 
     //! compute and set boundary values of F and G
     discretization->compute_bound_val_FG();
@@ -65,12 +66,13 @@ int main(int argc, char *argv[])
     {
         //! compute and update boundary using boundary conditions of u and v around domain
         discretization->update_bound_val_uv(
-            settings.dirichletBcBottom, settings.dirichletBcTop,
-            settings.dirichletBcLeft, settings.dirichletBcRight);
+            settings.bcBottom, settings.bcTop,
+            settings.bcLeft, settings.bcRight,
+            settings.useDirichletBc);
 
         //! time step calculation
         discretization->set_dt(settings.maximumDt, settings.tau); //< set timestep
-        //discretization->set_dt(.2);                                  //< alternatively set timestep manually
+        //discretization->set_dt(.2);                               //< alternatively set timestep manually
         if ((t + discretization->dt()) > settings.endTime) //< handle last time step
             discretization->set_dt(settings.endTime - t);
         t += discretization->dt(); //< update current time t

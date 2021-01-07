@@ -5,10 +5,28 @@
 #include <iostream>
 #include <string>
 
-void Settings::loadFromFile(const std::string& filename)
+const bool Settings::extract_bool(std::string &str) const
+{
+	bool result{};
+	//remove white spaces from value string
+	str.erase(
+		std::remove(str.begin(), str.end(), ' '), str.end());
+	//load value (true or false)
+	if (str == "true")
+		return true;
+	else if (str == "false")
+		return false;
+	else
+	{
+		std::cout << "Unable to read bool from input. Return true.\n ";
+		return true;
+	}
+}
+
+void Settings::loadFromFile(const std::string &filename)
 {
 	//open file with settings
-	std::ifstream settings{ filename };
+	std::ifstream settings{filename};
 	if (!settings.is_open())
 	{
 		std::cout << "Unable to open file: " << filename << '\n';
@@ -26,8 +44,7 @@ void Settings::loadFromFile(const std::string& filename)
 		while (std::getline(settings, line))
 		{
 			//check if line is comment or empty or hast no '=' sign
-			if ((line[0] != '#')
-				&& (line.find_first_of("= \t") != std::string::npos))
+			if ((line[0] != '#') && (line.find_first_of("= \t") != std::string::npos))
 			{
 				//extract parameter name
 				parameter_name = line.substr(0, line.find_first_of('='));
@@ -39,7 +56,7 @@ void Settings::loadFromFile(const std::string& filename)
 				//extract parameter value
 				eq_sign_pos = line.find_first_of('=');
 				parameter_value_string = line.substr(eq_sign_pos + 1,
-					line.find_first_of("#\t") - eq_sign_pos - 1);
+													 line.find_first_of("#\t") - eq_sign_pos - 1);
 
 				//write parameter values in order of occurence in header file
 				if (parameter_name == "nCellsX")
@@ -63,37 +80,33 @@ void Settings::loadFromFile(const std::string& filename)
 				else if (parameter_name == "gY")
 					g[1] = std::stod(parameter_value_string);
 				else if (parameter_name == "useDonorCell")
-				{
-					//remove white spaces from value string
-					parameter_value_string.erase(
-						std::remove(parameter_value_string.begin(), parameter_value_string.end(), ' '),
-						parameter_value_string.end());
-					//load value (true or false)
-					if (parameter_value_string == "true")
-						useDonorCell = true;
-					else if (parameter_value_string == "false")
-						useDonorCell = false;
-					else
-						std::cout << "Unable to read \"useDonorCell\".\n";
-				}
+					useDonorCell = extract_bool(parameter_value_string);
 				else if (parameter_name == "alpha")
 					alpha = std::stod(parameter_value_string);
-				else if (parameter_name == "dirichletBottomX")
-					dirichletBcBottom[0] = std::stod(parameter_value_string);
-				else if (parameter_name == "dirichletBottomY")
-					dirichletBcBottom[1] = std::stod(parameter_value_string);
-				else if (parameter_name == "dirichletTopX")
-					dirichletBcTop[0] = std::stod(parameter_value_string);
-				else if (parameter_name == "dirichletTopY")
-					dirichletBcTop[1] = std::stod(parameter_value_string);
-				else if (parameter_name == "dirichletLeftX")
-					dirichletBcLeft[0] = std::stod(parameter_value_string);
-				else if (parameter_name == "dirichletLeftY")
-					dirichletBcLeft[1] = std::stod(parameter_value_string);
-				else if (parameter_name == "dirichletRightX")
-					dirichletBcRight[0] = std::stod(parameter_value_string);
-				else if (parameter_name == "dirichletRightY")
-					dirichletBcRight[1] = std::stod(parameter_value_string);
+				else if (parameter_name == "useDirichletBcBottom")
+					useDirichletBc[0] = extract_bool(parameter_value_string);
+				else if (parameter_name == "useDirichletBcTop")
+					useDirichletBc[1] = extract_bool(parameter_value_string);
+				else if (parameter_name == "useDirichletBcLeft")
+					useDirichletBc[2] = extract_bool(parameter_value_string);
+				else if (parameter_name == "useDirichletBcRight")
+					useDirichletBc[3] = extract_bool(parameter_value_string);
+				else if (parameter_name == "bottomX")
+					bcBottom[0] = std::stod(parameter_value_string);
+				else if (parameter_name == "bottomY")
+					bcBottom[1] = std::stod(parameter_value_string);
+				else if (parameter_name == "topX")
+					bcTop[0] = std::stod(parameter_value_string);
+				else if (parameter_name == "topY")
+					bcTop[1] = std::stod(parameter_value_string);
+				else if (parameter_name == "leftX")
+					bcLeft[0] = std::stod(parameter_value_string);
+				else if (parameter_name == "leftY")
+					bcLeft[1] = std::stod(parameter_value_string);
+				else if (parameter_name == "rightX")
+					bcRight[0] = std::stod(parameter_value_string);
+				else if (parameter_name == "rightY")
+					bcRight[1] = std::stod(parameter_value_string);
 				else if (parameter_name == "pressureSolver")
 				{
 					//remove white spaces from value string
@@ -125,12 +138,13 @@ void Settings::loadFromFile(const std::string& filename)
 void Settings::printSettings()
 {
 	std::cout << "Settings: " << std::endl
-		<< "  physicalSize: " << physicalSize[0] << " x " << physicalSize[1] << ", nCells: " << nCells[0] << " x " << nCells[1] << std::endl
-		<< "  endTime: " << endTime << " s, re: " << re << ", g: (" << g[0] << "," << g[1] << "), tau: " << tau << ", maximum dt: " << maximumDt << std::endl
-		<< "  dirichletBC: bottom: (" << dirichletBcBottom[0] << "," << dirichletBcBottom[1] << ")"
-		<< ", top: (" << dirichletBcTop[0] << "," << dirichletBcTop[1] << ")"
-		<< ", left: (" << dirichletBcLeft[0] << "," << dirichletBcLeft[1] << ")"
-		<< ", right: (" << dirichletBcRight[0] << "," << dirichletBcRight[1] << ")" << std::endl
-		<< "  useDonorCell: " << std::boolalpha << useDonorCell << ", alpha: " << alpha << std::endl
-		<< "  pressureSolver: " << pressureSolver << ", omega: " << omega << ", epsilon: " << epsilon << ", maximumNumberOfIterations: " << maximumNumberOfIterations << std::endl;
+			  << "  physicalSize: " << physicalSize[0] << " x " << physicalSize[1] << ", nCells: " << nCells[0] << " x " << nCells[1] << std::endl
+			  << "  endTime: " << endTime << " s, re: " << re << ", g: (" << g[0] << "," << g[1] << "), tau: " << tau << ", maximum dt: " << maximumDt << std::endl
+			  << "  useDirichletBc: bottom: " << useDirichletBc[0] << ", top: " << useDirichletBc[1] << ", left: " << useDirichletBc[2] << ", right: " << useDirichletBc[3] << std::endl
+			  << "  dirichletBC: bottom: (" << bcBottom[0] << "," << bcBottom[1] << ")"
+			  << ", top: (" << bcTop[0] << "," << bcTop[1] << ")"
+			  << ", left: (" << bcLeft[0] << "," << bcLeft[1] << ")"
+			  << ", right: (" << bcRight[0] << "," << bcRight[1] << ")" << std::endl
+			  << "  useDonorCell: " << std::boolalpha << useDonorCell << ", alpha: " << alpha << std::endl
+			  << "  pressureSolver: " << pressureSolver << ", omega: " << omega << ", epsilon: " << epsilon << ", maximumNumberOfIterations: " << maximumNumberOfIterations << std::endl;
 }
