@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "staggered_grid.h"
 
@@ -9,6 +9,21 @@
 
 class Discretization
 {
+private:
+	enum VARS
+	{
+		VAR_U,
+		VAR_V,
+		VAR_P
+	};
+	enum SIDES
+	{
+		BOTTOM,
+		TOP,
+		LEFT,
+		RIGHT
+	};
+
 protected:
 	Staggered_grid m_u;
 	Staggered_grid m_v;
@@ -47,6 +62,9 @@ public:
 	const Staggered_grid &G() const;
 	const Staggered_grid &RHS() const;
 	Staggered_grid &p_ref(); //< return p by non-const reference
+	const double p(int i, int j) const;
+	double &p_ref(int i, int j);
+	
 	const std::array<int, 2> &nCells() const;
 
 	//! sets up boundary using boundary conditions of u,v around domain
@@ -61,16 +79,22 @@ public:
 		const std::array<double, 2> &bcLeft, const std::array<double, 2> &bcRight,
 		const std::array<bool, 4> &useDirichletBc);
 
+	// check wether point is inside obstacle; var: 0 for U, 1 for V and 2 for P
+	bool is_in_obstacle(int i, int j, int var);
+	
+	// compute boundary values around obstacle
+	void compute_bound_val_obstacle();
+
 	//! compute and update boundary values of F and G
 	void compute_bound_val_FG();
 
 	// compute and update F and G
 	void compute_FG();
 
-	//compute and update RHS
+	// compute and update RHS
 	void compute_RHS();
 
-	//compute and update u and v
+	// compute and update u and v
 	void compute_uv();
 
 	// compute the 1st derivative ∂ p / ∂x

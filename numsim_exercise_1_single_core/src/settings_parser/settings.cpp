@@ -91,22 +91,30 @@ void Settings::loadFromFile(const std::string &filename)
 					useDirichletBc[2] = extract_bool(parameter_value_string);
 				else if (parameter_name == "useDirichletBcRight")
 					useDirichletBc[3] = extract_bool(parameter_value_string);
-				else if (parameter_name == "bottomX")
+				else if (parameter_name == "bcBottomX")
 					bcBottom[0] = std::stod(parameter_value_string);
-				else if (parameter_name == "bottomY")
+				else if (parameter_name == "bcBottomY")
 					bcBottom[1] = std::stod(parameter_value_string);
-				else if (parameter_name == "topX")
+				else if (parameter_name == "bcTopX")
 					bcTop[0] = std::stod(parameter_value_string);
-				else if (parameter_name == "topY")
+				else if (parameter_name == "bcTopY")
 					bcTop[1] = std::stod(parameter_value_string);
-				else if (parameter_name == "leftX")
+				else if (parameter_name == "bcLeftX")
 					bcLeft[0] = std::stod(parameter_value_string);
-				else if (parameter_name == "leftY")
+				else if (parameter_name == "bcLeftY")
 					bcLeft[1] = std::stod(parameter_value_string);
-				else if (parameter_name == "rightX")
+				else if (parameter_name == "bcRightX")
 					bcRight[0] = std::stod(parameter_value_string);
-				else if (parameter_name == "rightY")
+				else if (parameter_name == "bcRightY")
 					bcRight[1] = std::stod(parameter_value_string);
+				else if (parameter_name == "obstLoLeX")
+					obstaclePos[0] = std::stoi(parameter_value_string);
+				else if (parameter_name == "obstLoLeY")
+					obstaclePos[1] = std::stoi(parameter_value_string);
+				else if (parameter_name == "obstUpRiX")
+					obstaclePos[2] = std::stoi(parameter_value_string);
+				else if (parameter_name == "obstUpRiY")
+					obstaclePos[3] = std::stoi(parameter_value_string);
 				else if (parameter_name == "pressureSolver")
 				{
 					//remove white spaces from value string

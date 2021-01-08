@@ -1,6 +1,5 @@
 #include "pressure_solver.h"
 
-#include <cmath>
 
 Pressure_solver::Pressure_solver(double dx, double dy, double eps, double max_it)
 	: m_dx{ dx }, m_dy{ dy }, m_eps{ eps }, m_max_it{ max_it }{}
@@ -36,19 +35,20 @@ double Pressure_solver::residual(const Array2D& p, const Array2D& RHS) const
 }
 
 //! implementation of pressure solver
-void Pressure_solver::solver(Array2D& p, const Array2D& RHS) const
+//void Pressure_solver::solver(Array2D& p, const Array2D& RHS) const
+void Pressure_solver::solver(Discretization& discr) const;
 {
 	//! get array size
-	std::array<int, 2>size = p.size();
-	assert(p.size() == RHS.size());
+	std::array<int, 2>size = discr.p().size();
+	assert(discr.p().size() == discr.RHS().size());
 
 	//! initialize iterations
-	double res{ residual(p,RHS) };
+	double res{ residual(discr.p(),discr.RHS()) };
 	int it_counter{ 0 };
 	while (res > m_eps && it_counter < m_max_it)
 	{
-		run_it_step(p, RHS, size);
-		res = residual(p, RHS);
+		run_it_step(discr);
+		res = residual(discr.p(), discr.RHS());
 		++it_counter;
 	}
 

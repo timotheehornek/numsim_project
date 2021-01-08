@@ -91,7 +91,8 @@ int main(int argc, char *argv[])
         discretization->compute_RHS();
 
         //! solve pressure equation and update p
-        pressure_solver->solver(discretization->p_ref(), discretization->RHS());
+        //pressure_solver->solver(discretization->p_ref(), discretization->RHS());
+		pressure_solver->solver(*discretization);
 
         //! compute and update u and v
         discretization->compute_uv();
