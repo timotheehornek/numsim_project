@@ -113,15 +113,46 @@ void Discretization::setup_bound_val_uv(
 			m_v(i, 0) = bcBottom[1];
 	}
 	else //< Neumann
-	{
-		//m_v(i, 0) = - bcBottom[1] * m_dy;
-	}
-	//####################
-	//HIER WEITERMACHEN
+		for (int i{0}; i < m_v.x_max(); ++i)
+			m_v(i, 0) = - bcBottom[1] * m_dy;
 
 	// top
 	if (useDirichletBc[BOTTOM])
+	{
+		for (int i{1}; i < m_u.x_max() - 1; ++i)
+			m_u(i, m_u.y_max() - 1) = 2 * bcTop[0] - m_u(i, m_u.y_max() - 2);
+		for (int i{0}; i < m_v.x_max(); ++i)
+			m_v(i, m_v.y_max() - 1) = bcTop[1];
+	}
+	else //< Neumann
+		for (int i{0}; i < m_v.x_max(); ++i)
+			m_v(i, m_v.y_max() - 1) =  bcTop[1] * m_dy;
+	
+	// left
+	if (useDirichlet[LEFT]) //< Dirichlet
+	{
+		for (int j{0}; j < m_u.y_max(); ++j)
+			m_u(0, j) = bcLeft[0];
+		for (int j{1}; j < m_v.y_max() - 1; ++j)
+			m_v(0, j) = 2 * bcLeft[1] - m_v(1, j);
+	}
+	else //< Neumann
+		for (int j{0}; j < m_u.y_max(); ++j)
+			m_u(0, j) = - bcLeft[0] * m_dx;
+	
+	// right
+	if (useDirichlet[RIGHT]) //< Dirichlet
+	{
+		for (int j{0}; j < m_u.y_max(); ++j)
+			m_u(m_u.x_max() - 1, j) = bcRight[0];
+		for (int j{1}; j < m_v.y_max() - 1; ++j)
+			m_v(m_v.x_max() - 1, j) = 2 * bcRight[1] - m_v(m_v.x_max() - 2, j);
+	}
+	else //< Neumann
+		for (int j{0}; j < m_u.y_max(); ++j)
+			m_u(m_u.x_max() - 1, j) = m_u(m_u.x_max() - 2, j) + bcRight[0] * m_dx;
 
+/*
 	//! set u
 	for (int j{0}; j < m_u.y_max(); ++j)
 	{
@@ -153,7 +184,9 @@ void Discretization::setup_bound_val_uv(
 		// top boundary
 		m_v(i, m_v.y_max() - 1) = bcTop[1];
 	}
+*/
 }
+
 
 void Discretization::update_bound_val_uv(
 	const std::array<double, 2> &bcBottom, const std::array<double, 2> &bcTop,
@@ -173,45 +206,49 @@ void Discretization::update_bound_val_uv(
 		for (int i{1}; i < m_u.x_max() - 1; ++i)
 			m_u(i, 0) = 2 * bcBottom[0] - m_u(i, 1);
 	else //< Neumann
+	{
 		for (int i{1}; i < m_u.x_max() - 1; ++i)
-		{
 			m_u(i, 0) = m_u(i, 1);
+		for (int i{0}; i < m_v.x_max(); ++i)
 			m_v(i, 0) = m_v(i, 1) - bcBottom[1] * m_dy;
-		}
+	}
 
 	// top
 	if (useDirichletBc[TOP]) //< Dirichlet
 		for (int i{1}; i < m_u.x_max() - 1; ++i)
 			m_u(i, m_u.y_max() - 1) = 2 * bcTop[0] - m_u(i, m_u.y_max() - 2);
 	else //< Neumann
+	{
 		for (int i{1}; i < m_u.x_max() - 1; ++i)
-		{
 			m_u(i, m_u.y_max() - 1) = m_u(i, m_u.y_max() - 2);
-			m_v(i, m_u.y_max() - 1) = m_v(i, m_u.y_max() - 2) + bcTop[1] * m_dy;
-		}
+		for (int i{0}; i < m_v.x_max(); ++i)
+			m_v(i, m_v.y_max() - 1) = m_v(i, m_v.y_max() - 2) + bcTop[1] * m_dy;
+	}
 
 	// left
 	if (useDirichletBc[LEFT]) //< Dirichlet
 		for (int j{0}; j < m_v.y_max(); ++j)
 			m_v(0, j) = 2 * bcLeft[1] - m_v(1, j);
 	else //< Neumann
+	{
 		for (int j{0}; j < m_v.y_max(); ++j)
-		{
 			m_v(0, j) = m_v(1, j);
+		for (int j{0}; j < m_u.y_max(); ++j)
 			m_u(0, j) = m_u(1, j) - bcLeft[0] * m_dx;
-		}
+	}
 
 	// right
 	if (useDirichletBc[RIGHT]) //< Dirichlet
 		for (int j{0}; j < m_v.y_max(); ++j)
 			m_v(m_v.x_max() - 1, j) = 2 * bcRight[1] - m_v(m_v.x_max() - 2, j);
 	else //< Neumann
+	{
 		for (int j{0}; j < m_v.y_max(); ++j)
-		{
 			m_v(m_v.x_max() - 1, j) = m_v(m_v.x_max() - 2, j);
-			m_u(m_v.x_max() - 1, j) = m_u(m_v.x_max() - 2, j) + bcRight[0] * m_dx;
-		}
-
+		for (int j{0}; j < m_u.y_max(); ++j)
+			m_u(m_u.x_max() - 1, j) = m_u(m_u.x_max() - 2, j) + bcRight[0] * m_dx;
+	}
+	
 	/*
 	// only the boundary values that depend on inner u,v are updated
 	// update u
