@@ -129,7 +129,7 @@ void Discretization::setup_bound_val_uv(
 			m_v(i, m_v.y_max() - 1) =  bcTop[1] * m_dy;
 	
 	// left
-	if (useDirichlet[LEFT]) //< Dirichlet
+	if (useDirichletBc[LEFT]) //< Dirichlet
 	{
 		for (int j{0}; j < m_u.y_max(); ++j)
 			m_u(0, j) = bcLeft[0];
@@ -141,7 +141,7 @@ void Discretization::setup_bound_val_uv(
 			m_u(0, j) = - bcLeft[0] * m_dx;
 	
 	// right
-	if (useDirichlet[RIGHT]) //< Dirichlet
+	if (useDirichletBc[RIGHT]) //< Dirichlet
 	{
 		for (int j{0}; j < m_u.y_max(); ++j)
 			m_u(m_u.x_max() - 1, j) = bcRight[0];
