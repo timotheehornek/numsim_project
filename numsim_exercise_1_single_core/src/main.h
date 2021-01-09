@@ -13,7 +13,7 @@
 #include "array2d/array2d.h"
 #include "discretization/central_differences.h"
 #include "discretization/donor_cell.h"
-#include "pressure_solver/gauss_seidel.h"
+//#include "pressure_solver/gauss_seidel.h"
 #include "pressure_solver/pressure_solver.h"
 #include "settings_parser/settings.h"
 #include "pressure_solver/SOR.h"

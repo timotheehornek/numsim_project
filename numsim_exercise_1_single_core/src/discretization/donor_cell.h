@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "discretization.h"
 
@@ -8,7 +8,7 @@ class Donor_cell :
 private:
 	const double m_alpha;
 public:
-	Donor_cell(const std::array<int, 2>& nCells, const std::array<double, 2>& physicalSize, const double re, const std::array<double, 2>& g, const double alpha);
+	Donor_cell(const std::array<int, 2>& nCells, const std::array<double, 2>& physicalSize, const std::array<int, 4>& obstacle_pos, const double re, const std::array<double, 2>& g, const double alpha);
 
 	//! compute the 1st derivative ∂ p / ∂x
 	double compute_dp_dx(int i, int j) const override;

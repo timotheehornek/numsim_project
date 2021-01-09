@@ -9,10 +9,17 @@ class SOR
 {
 private:
 	const double m_w;
+	
+	enum VARS
+	{
+		VAR_U,
+		VAR_V,
+		VAR_P
+	};
 public:
-	SOR(double dx, double dy, double eps, double max_it, double w);
+	SOR(double eps, double max_it, double w);
 
 	// run one  Successive OverRelaxation iteration and update p
 	//void run_it_step(Array2D& p, const Array2D& RHS, const std::array<int, 2> size) const override;
-	void run_it_step(Discretization& dctzt) const override;
+	void run_it_step(Discretization& discr) const override;
 };

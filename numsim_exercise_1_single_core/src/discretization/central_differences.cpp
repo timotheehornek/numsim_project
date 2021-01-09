@@ -1,8 +1,7 @@
-﻿#include "central_differences.h"
+#include "central_differences.h"
 
-
-Central_differences::Central_differences(const std::array<int, 2>& nCells, const std::array<double, 2>& physicalSize, const double re, const std::array<double, 2>& g)
-	: Discretization(nCells, physicalSize, re, g) {};
+Central_differences::Central_differences(const std::array<int, 2>& nCells, const std::array<double, 2>& physicalSize, const std::array<int, 4>& obstacle_pos, const double re, const std::array<double, 2>& g)
+	: Discretization(nCells, physicalSize, obstacle_pos, re, g) {};
 
 
 //! compute the 1st derivative ∂ p / ∂x

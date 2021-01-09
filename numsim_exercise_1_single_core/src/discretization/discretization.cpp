@@ -1,6 +1,6 @@
 #include "discretization.h"
 
-Discretization::Discretization(const std::array<int, 2> &nCells, const std::array<double, 2> &physicalSize, const double re, const std::array<double, 2> &g)
+Discretization::Discretization(const std::array<int, 2> &nCells, const std::array<double, 2> &physicalSize, const std::array<int, 4>& obstacle_pos, const double re, const std::array<double, 2> &g)
 	: m_nCells{nCells},
 	  m_u{nCells[0] + 1, nCells[1] + 2},
 	  m_v{nCells[0] + 2, nCells[1] + 1},
@@ -10,6 +10,7 @@ Discretization::Discretization(const std::array<int, 2> &nCells, const std::arra
 	  m_RHS{nCells[0] + 2, nCells[1] + 2},
 	  m_dx{physicalSize[0] / nCells[0]},
 	  m_dy{physicalSize[1] / nCells[1]},
+	  m_obstacle_pos{obstacle_pos},
 	  m_re{re},
 	  m_g{g}
 {
@@ -82,6 +83,10 @@ const Staggered_grid &Discretization::RHS() const
 {
 	return m_RHS;
 }
+const double Discretization::RHS(int i, int j) const
+{
+	return m_RHS(i,j);
+}
 /*
 Staggered_grid &Discretization::p_ref()
 {
@@ -98,6 +103,11 @@ double &Discretization::p_ref(int i, int j)
 const std::array<int, 2> &Discretization::nCells() const
 {
 	return m_nCells;
+}
+const int Discretization::obstacle_pos(int i) const
+{
+	assert(0<=i&&i<4);
+	return m_obstacle_pos[i];
 }
 
 void Discretization::setup_bound_val_uv(
@@ -278,32 +288,25 @@ bool Discretization::is_in_obstacle(int i, int j, int var)
 
 void Discretization::compute_bound_val_obstacle()
 {
-	// top + bottom (without corners): u and p
+	// top + bottom (without corners): u
 	for (int i{m_obstacle_pos[0]+2};i<=m_obstacle_pos[2];++i)
 	{
 		// top
 		m_u(i,m_obstacle_pos[3]+1)=-m_u(i,m_obstacle_pos[3]+2);
-		//m_p(i,m_obstacle_pos[3]+1)=m_p(i,m_obstacle_pos[3]+2);
 		
 		// bottom
 		m_u(i,m_obstacle_pos[1]+1)=-m_u(i,m_obstacle_pos[1]);
-		//m_p(i,m_obstacle_pos[1]+1)=m_p(i,m_obstacle_pos[1]);
 	}
 	
-	// left + right (without corners): v and p
+	// left + right (without corners): v
 	for (int j{m_obstacle_pos[1]+2};j<=m_obstacle_pos[3];++j)
 	{
 		// left
 		m_v(m_obstacle_pos[0]+1,j)= -m_v(m_obstacle_pos[0],j);
-		//m_p(m_obstacle_pos[0]+1,j)= m_p(m_obstacle_pos[0],j);
 		
 		// right
 		m_v(m_obstacle_pos[2]+1,j)= -m_v(m_obstacle_pos[2]+2,j);
-		//m_p(m_obstacle_pos[2]+1,j)= m_p(m_obstacle_pos[2]+2,j);
 	}
-	
-	// corners: p (update takes place in pressure solver)
-	//m_p(m_obstacle_pos[0]+1,m_obstacle_pos[1]+1)=
 }
 
 void Discretization::compute_bound_val_FG()
@@ -335,7 +338,7 @@ void Discretization::compute_FG()
 	{
 		for (int i{1}; i < m_u.x_max() - 1; ++i)
 		{
-			if(!is_in_obstacle(i, j, VAR_U)) //< check if outside obstacle
+			//if(!is_in_obstacle(i, j, VAR_U)) //< check if outside obstacle
 				m_F(i, j) = m_u(i, j)														   //< u at i,j
 							+ m_dt * (1 / m_re * (compute_du_dx2(i, j) + compute_du_dy2(i, j)) //< diffusion term
 									  - compute_du2_dx(i, j) - compute_duv_dy(i, j)			   //< convection terms
@@ -348,7 +351,7 @@ void Discretization::compute_FG()
 	{
 		for (int i{1}; i < m_v.x_max() - 1; ++i)
 		{
-			if(!is_in_obstacle(i, j, VAR_V)) //< check if outside obstacle
+			//if(!is_in_obstacle(i, j, VAR_V)) //< check if outside obstacle
 				m_G(i, j) = m_v(i, j)														   //< v at i,j
 							+ m_dt * (1 / m_re * (compute_dv_dx2(i, j) + compute_dv_dy2(i, j)) //< diffusion term
 									  - compute_duv_dx(i, j) - compute_dv2_dy(i, j)			   //< convection terms

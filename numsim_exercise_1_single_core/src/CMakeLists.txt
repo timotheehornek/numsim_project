@@ -17,7 +17,7 @@ add_executable(${PROJECT_NAME}
    discretization/donor_cell.cpp
    discretization/staggered_grid.cpp
    pressure_solver/pressure_solver.cpp
-   pressure_solver/gauss_seidel.cpp
+#   pressure_solver/gauss_seidel.cpp
    pressure_solver/SOR.cpp
 )
 
@@ -57,3 +57,4 @@ file(COPY driven_cavity.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 #copy settings files to build/
 file(COPY lid_driven_cavity.txt DESTINATION ${PROJECT_SOURCE_DIR}/../build)
 file(COPY driven_cavity.txt DESTINATION ${PROJECT_SOURCE_DIR}/../build)
+file(COPY carman_vortex_street.txt DESTINATION ${PROJECT_SOURCE_DIR}/../build)

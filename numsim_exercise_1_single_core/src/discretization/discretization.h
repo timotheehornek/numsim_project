@@ -42,9 +42,11 @@ protected:
 
 	const std::array<int, 2> m_nCells;
 
+	const std::array<int, 4>& m_obstacle_pos;
+
 public:
 	//! construct the object with given number of cells in x and y direction
-	Discretization(const std::array<int, 2> &nCells, const std::array<double, 2> &physicalSize, const double re, const std::array<double, 2> &g);
+	Discretization(const std::array<int, 2> &nCells, const std::array<double, 2> &physicalSize, const std::array<int, 4>& obstacle_pos, const double re, const std::array<double, 2> &g);
 
 	//! set dt checking stability conditions
 	void set_dt(double dt_max, double sec_factor);
@@ -61,11 +63,14 @@ public:
 	const Staggered_grid &F() const;
 	const Staggered_grid &G() const;
 	const Staggered_grid &RHS() const;
+	const double RHS(int i, int j) const;
 	Staggered_grid &p_ref(); //< return p by non-const reference
 	const double p(int i, int j) const;
 	double &p_ref(int i, int j);
 	
 	const std::array<int, 2> &nCells() const;
+	
+	const int obstacle_pos(int i) const;
 
 	//! sets up boundary using boundary conditions of u,v around domain
 	void setup_bound_val_uv(

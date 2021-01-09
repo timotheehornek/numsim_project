@@ -1,15 +1,16 @@
 #include "pressure_solver.h"
 
 
-Pressure_solver::Pressure_solver(double dx, double dy, double eps, double max_it)
-	: m_dx{ dx }, m_dy{ dy }, m_eps{ eps }, m_max_it{ max_it }{}
+Pressure_solver::Pressure_solver(double eps, double max_it)
+	: m_eps{ eps }, m_max_it{ max_it }{}
 
 
-double Pressure_solver::residual(const Array2D& p, const Array2D& RHS) const
+//double Pressure_solver::residual(const Array2D& p, const Array2D& RHS) const
+	double Pressure_solver::residual(Discretization& discr) const
 {
 	//! get array size
-	std::array<int, 2>size = p.size();
-	assert(p.size() == RHS.size());
+	std::array<int, 2>size = discr.p().size();
+	assert(discr.p().size() == discr.RHS().size());
 
 	double p_xx{};
 	double p_yy{};
@@ -20,12 +21,15 @@ double Pressure_solver::residual(const Array2D& p, const Array2D& RHS) const
 	{
 		for (int i{ 1 }; i < size[0] - 1; ++i)
 		{
-			//! compute local result of laplace operator
-			p_xx = (p(i - 1, j) - 2 * p(i, j) + p(i + 1, j)) / std::pow(m_dx, 2);
-			p_yy = (p(i, j - 1) - 2 * p(i, j) + p(i, j + 1)) / std::pow(m_dy, 2);
-
-			//! add squared local residual to result
-			residual += std::pow(RHS(i,j) - (p_xx + p_yy), 2);
+			if (!discr.is_in_obstacle(i,j,VAR_P))
+			{
+				//! compute local result of laplace operator
+				p_xx = (discr.p(i - 1, j) - 2 * discr.p(i, j) + discr.p(i + 1, j)) / std::pow(discr.dx(), 2);
+				p_yy = (discr.p(i, j - 1) - 2 * discr.p(i, j) + discr.p(i, j + 1)) / std::pow(discr.dy(), 2);
+	
+				//! add squared local residual to result
+				residual += std::pow(discr.RHS(i,j) - (p_xx + p_yy), 2);
+			}
 		}
 	}
 	//! compute number of inner cells
@@ -36,19 +40,19 @@ double Pressure_solver::residual(const Array2D& p, const Array2D& RHS) const
 
 //! implementation of pressure solver
 //void Pressure_solver::solver(Array2D& p, const Array2D& RHS) const
-void Pressure_solver::solver(Discretization& discr) const;
+void Pressure_solver::solver(Discretization& discr) const
 {
 	//! get array size
 	std::array<int, 2>size = discr.p().size();
 	assert(discr.p().size() == discr.RHS().size());
 
 	//! initialize iterations
-	double res{ residual(discr.p(),discr.RHS()) };
+	double res{ residual(discr) };
 	int it_counter{ 0 };
 	while (res > m_eps && it_counter < m_max_it)
 	{
 		run_it_step(discr);
-		res = residual(discr.p(), discr.RHS());
+		res = residual(discr);
 		++it_counter;
 	}
 

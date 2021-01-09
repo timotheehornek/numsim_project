@@ -11,6 +11,8 @@ const bool Settings::extract_bool(std::string &str) const
 	//remove white spaces from value string
 	str.erase(
 		std::remove(str.begin(), str.end(), ' '), str.end());
+	str.erase(
+		std::remove(str.begin(), str.end(), '\r'), str.end());
 	//load value (true or false)
 	if (str == "true")
 		return true;
@@ -18,7 +20,7 @@ const bool Settings::extract_bool(std::string &str) const
 		return false;
 	else
 	{
-		std::cout << "Unable to read bool from input. Return true.\n ";
+		std::cout << "Unable to read bool from input. Return true.\n" << "Input was: "	<< str << ".\n";
 		return true;
 	}
 }
@@ -56,7 +58,7 @@ void Settings::loadFromFile(const std::string &filename)
 				//extract parameter value
 				eq_sign_pos = line.find_first_of('=');
 				parameter_value_string = line.substr(eq_sign_pos + 1,
-													 line.find_first_of("#\t") - eq_sign_pos - 1);
+													 line.find_first_of("#\t\n") - eq_sign_pos - 1);
 
 				//write parameter values in order of occurence in header file
 				if (parameter_name == "nCellsX")

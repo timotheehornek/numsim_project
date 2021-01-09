@@ -27,11 +27,11 @@ int main(int argc, char *argv[])
     std::shared_ptr<Discretization> discretization;
     if (settings.useDonorCell)
         discretization = std::make_shared<Donor_cell>(
-            settings.nCells, settings.physicalSize,
+            settings.nCells, settings.physicalSize, settings.obstaclePos,
             settings.re, settings.g, settings.alpha);
     else
         discretization = std::make_shared<Central_differences>(
-            settings.nCells, settings.physicalSize,
+            settings.nCells, settings.physicalSize, settings.obstaclePos,
             settings.re, settings.g);
 
     //! setup ouput writer
@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
 
     //! initialize pressure solver
     std::shared_ptr<Pressure_solver> pressure_solver;
+	/*
     if (settings.pressureSolver == "GaussSeidel")
         pressure_solver = std::make_shared<Gauss_seidel>(
             discretization->dx(), discretization->dy(),
@@ -48,6 +49,8 @@ int main(int argc, char *argv[])
     else
         pressure_solver = std::make_shared<SOR>(
             discretization->dx(), discretization->dy(),
+            settings.epsilon, settings.maximumNumberOfIterations, settings.omega);*/
+	pressure_solver = std::make_shared<SOR>(
             settings.epsilon, settings.maximumNumberOfIterations, settings.omega);
 
     //! load boundaries for velocities u and v
@@ -63,7 +66,8 @@ int main(int argc, char *argv[])
     double t{0.0};
 
     while (t < settings.endTime) // <= iterate through time span
-    {
+    //while (t==0.0)
+	{
         //! compute and update boundary using boundary conditions of u and v around domain
         discretization->update_bound_val_uv(
             settings.bcBottom, settings.bcTop,
@@ -96,6 +100,9 @@ int main(int argc, char *argv[])
 
         //! compute and update u and v
         discretization->compute_uv();
+		
+		//! compute u and v around boundary
+		//discretization->compute_bound_val_obstacle();
 
         //! write results to output
         OWP.writeFile(t);
@@ -103,6 +110,7 @@ int main(int argc, char *argv[])
 
         //! print variables
         if (detailed_results && t == settings.endTime)
+		//if(true)
         {
             DEBUG_PRINT(
                 "Current result overview:\n"

@@ -1,7 +1,7 @@
-﻿#include "donor_cell.h"
+#include "donor_cell.h"
 
-Donor_cell::Donor_cell(const std::array<int, 2>& nCells, const std::array<double, 2>& physicalSize, const double re, const std::array<double, 2>& g, const double alpha)
-	: Discretization(nCells, physicalSize, re, g), m_alpha{alpha} {};
+Donor_cell::Donor_cell(const std::array<int, 2>& nCells, const std::array<double, 2>& physicalSize, const std::array<int, 4>& obstacle_pos, const double re, const std::array<double, 2>& g, const double alpha)
+	: Discretization(nCells, physicalSize, obstacle_pos, re, g), m_alpha{alpha} {};
 
 //! compute the 1st derivative ∂ p / ∂x
 double Donor_cell::compute_dp_dx(int i, int j) const
