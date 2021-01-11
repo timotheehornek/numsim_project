@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
         discretization->compute_uv();
 		
 		//! compute u and v around boundary
-		//discretization->compute_bound_val_obstacle();
+		discretization->compute_bound_val_obstacle();
 
         //! write results to output
         OWP.writeFile(t);

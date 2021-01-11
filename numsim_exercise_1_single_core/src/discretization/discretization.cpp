@@ -339,7 +339,7 @@ void Discretization::compute_FG()
 	{
 		for (int i{1}; i < m_u.x_max() - 1; ++i)
 		{
-			//if(!is_in_obstacle(i, j, VAR_U)) //< check if outside obstacle
+			if(!is_in_obstacle(i, j, VAR_U)) //< check if outside obstacle
 				m_F(i, j) = m_u(i, j)														   //< u at i,j
 							+ m_dt * (1 / m_re * (compute_du_dx2(i, j) + compute_du_dy2(i, j)) //< diffusion term
 									  - compute_du2_dx(i, j) - compute_duv_dy(i, j)			   //< convection terms
@@ -352,7 +352,7 @@ void Discretization::compute_FG()
 	{
 		for (int i{1}; i < m_v.x_max() - 1; ++i)
 		{
-			//if(!is_in_obstacle(i, j, VAR_V)) //< check if outside obstacle
+			if(!is_in_obstacle(i, j, VAR_V)) //< check if outside obstacle
 				m_G(i, j) = m_v(i, j)														   //< v at i,j
 							+ m_dt * (1 / m_re * (compute_dv_dx2(i, j) + compute_dv_dy2(i, j)) //< diffusion term
 									  - compute_duv_dx(i, j) - compute_dv2_dy(i, j)			   //< convection terms

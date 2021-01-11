@@ -39,7 +39,7 @@ void SOR::run_it_step(Discretization& discr) const
 		for (int i{ 0 }; i < discr.p().size()[0] ; ++i)
 			discr.p_ref(i, discr.p().size()[1] - 1) = discr.p(i, discr.p().size()[1] - 2);
 	
-	/*
+	
 	//! update boundary values around obstacle
 	// top + bottom (without corners)
 	for (int i{discr.obstacle_pos(0)+2};i<=discr.obstacle_pos(2);++i)
@@ -66,5 +66,4 @@ void SOR::run_it_step(Discretization& discr) const
 	discr.p_ref(discr.obstacle_pos(2)+1,discr.obstacle_pos(1)+1)=.5*(discr.p(discr.obstacle_pos(2)+2,discr.obstacle_pos(1)+1)+discr.p(discr.obstacle_pos(2)+1, discr.obstacle_pos(1)));
 	discr.p_ref(discr.obstacle_pos(2)+1,discr.obstacle_pos(3)+1)=.5*(discr.p(discr.obstacle_pos(2)+2,discr.obstacle_pos(3)+1)+discr.p(discr.obstacle_pos(2)+1, discr.obstacle_pos(3)+2));
 	discr.p_ref(discr.obstacle_pos(0)+1,discr.obstacle_pos(3)+1)=.5*(discr.p(discr.obstacle_pos(0),discr.obstacle_pos(3)+1)+discr.p(discr.obstacle_pos(0)+1, discr.obstacle_pos(3)+2));
-	*/
 }

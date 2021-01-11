@@ -55,7 +55,8 @@ void Pressure_solver::solver(Discretization& discr) const
 		res = residual(discr);
 		++it_counter;
 	}
-
+	
+	
 	DEBUG_PRINT
 	(
 		"Pressure solver terminated:\n"
