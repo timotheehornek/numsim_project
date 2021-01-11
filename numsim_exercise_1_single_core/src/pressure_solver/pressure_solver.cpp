@@ -1,8 +1,8 @@
 #include "pressure_solver.h"
 
 
-Pressure_solver::Pressure_solver(double eps, double max_it)
-	: m_eps{ eps }, m_max_it{ max_it }{}
+Pressure_solver::Pressure_solver(double eps, double max_it, const std::array<bool,4>& p_0_boundary)
+	: m_eps{ eps }, m_max_it{ max_it }, m_p_0_boundary{p_0_boundary}{}
 
 
 //double Pressure_solver::residual(const Array2D& p, const Array2D& RHS) const

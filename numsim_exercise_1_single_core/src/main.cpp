@@ -40,6 +40,12 @@ int main(int argc, char *argv[])
     //OutputWriterText OWT{ discretization };
 
     //! initialize pressure solver
+	std::array<bool,4> p_0_boundary{
+		settings.useDirichletBc[0]==false||settings.bcBottom[1]!=0,
+		settings.useDirichletBc[1]==false||settings.bcTop[1]!=0,
+		settings.useDirichletBc[2]==false||settings.bcLeft[0]!=0,
+		settings.useDirichletBc[3]==false||settings.bcRight[0]!=0,
+	}; //< set pressure boundary conditions (p=0 if true; Neumann otherwise)
     std::shared_ptr<Pressure_solver> pressure_solver;
 	/*
     if (settings.pressureSolver == "GaussSeidel")
@@ -51,7 +57,7 @@ int main(int argc, char *argv[])
             discretization->dx(), discretization->dy(),
             settings.epsilon, settings.maximumNumberOfIterations, settings.omega);*/
 	pressure_solver = std::make_shared<SOR>(
-            settings.epsilon, settings.maximumNumberOfIterations, settings.omega);
+            settings.epsilon, settings.maximumNumberOfIterations, settings.omega, p_0_boundary);
 
     //! load boundaries for velocities u and v
     discretization->setup_bound_val_uv(

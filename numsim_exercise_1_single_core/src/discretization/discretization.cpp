@@ -276,6 +276,7 @@ void Discretization::update_bound_val_uv(
 
 bool Discretization::is_in_obstacle(int i, int j, int var)
 {
+	assert(0<=var&&var<4);
 	switch (var) {
 		case VAR_U:
 			return m_obstacle_pos[0]-1<i&&m_obstacle_pos[1]<j&&i<=m_obstacle_pos[2]+1&&j<=m_obstacle_pos[3]+1;	
@@ -397,4 +398,4 @@ void Discretization::compute_uv()
 			m_v(i, j) = m_G(i, j) - m_dt * compute_dp_dy(i, j);
 		}
 	}
-	}
+}
