@@ -33,54 +33,45 @@ int main(int argc, char* argv[])
   std::array<double, 2> meshWidth = { lattice_boltzmann.dx(), lattice_boltzmann.dy() };
   OutputWriterParaviewLBM OWP{ lattice_boltzmann, meshWidth, settings.nCells };
 
-  // initialize turn variable
-  int turn = 1;
-
-  // initialize f_even and f_odd
+  // declare f_even and f_odd
   std::array<int, 2> size { settings.nCells[0] , settings.nCells[1] };
 
   std::array<Array2D, 9> f_even{ size, size, size, size, size, size, size, size, size };
   std::array<Array2D, 9> f_odd{ size, size, size, size, size, size, size, size, size };
 
   //initialize f_even
-  for(int i = 0; i < size[0]; i++)
-  {
-    for(int j = 0; j < size[1]; j++)
-    {
-      f_even[0](i,j) = 4.0 / 9.0;
-
-      f_even[1](i,j) = 1.0 / 9.0;
-      f_even[2](i,j) = 1.0 / 9.0;
-      f_even[3](i,j) = 1.0 / 9.0;
-      f_even[4](i,j) = 1.0 / 9.0;
-
-      f_even[5](i,j) = 1.0 / 36.0;
-      f_even[6](i,j) = 1.0 / 36.0;
-      f_even[7](i,j) = 1.0 / 36.0;
-      f_even[8](i,j) = 1.0 / 36.0;
-
-    }
-  }
+  lattice_boltzmann.initialize_f(1.0, f_even);
 
   // set the obstacle
-  lattice_boltzmann.set_obstacle(settings.obstaclePos);
+  lattice_boltzmann.set_obstacle_rect(settings.obstaclePos);
+  //lattice_boltzmann.set_obstacle_round({ settings.nCells[0] / 4 , settings.nCells[1] / 2}, settings.nCells[1] / 8);
 
   //! simulation time setup
   double t{ 0.0 };
 
+  //! set file counter
+  int output_counter { 1 };
+
+  // initialize turn variable
+  int turn = 1;
+
+  //compute max set velocity
+  double max_vel = lattice_boltzmann.get_max_vel(settings.useDirichletBc,
+     settings.bcBottom, settings.bcTop, settings.bcLeft, settings.bcRight);
+
+  //set relaxation parameter
+  lattice_boltzmann.set_tau(settings.physicalSize[1], max_vel);
+
+  //! time step calculation
+  lattice_boltzmann.set_dt();    //< set timestep
+
   while (t < settings.endTime) // <= iterate through time span
     {
-      //! time step calculation
-      lattice_boltzmann.set_dt();    //< set timestep
-      //discretization->set_dt(.2);                                  //< alternatively set timestep manually
+                                       //< alternatively set timestep manually
       if ((t + lattice_boltzmann.dt()) > settings.endTime)       //< handle last time step
-            lattice_boltzmann.set_dt(settings.endTime - t);
-      t += lattice_boltzmann.dt();                               //< update current time t
+        lattice_boltzmann.set_dt(settings.endTime - t);
 
-      //set relaxation parameter?
-      //lattice_boltzmann.set_tau(settings.physicalSize[0]);
-      //set relaxation parameter manually
-      lattice_boltzmann.set_tau_manually(1.0);
+      t += lattice_boltzmann.dt();                               //< update current time t
 
       //! inform user about current time step
       DEBUG_PRINT
@@ -103,6 +94,7 @@ int main(int argc, char* argv[])
 
         //do collide - stream all inner nodes
         lattice_boltzmann.two_lattice(f_even, f_odd);
+
         turn = 0;
       }
       else //input = f_odd and output = f_even
@@ -113,11 +105,16 @@ int main(int argc, char* argv[])
 
         //do collide - stream all inner nodes
         lattice_boltzmann.two_lattice(f_odd, f_even);
-        turn = 1;
+
+       turn = 1;
       }
 
-      //! write results to output
-      OWP.writeFile(t, lattice_boltzmann);
+      //! write one output file every second
+      if (output_counter == static_cast<int>(t))
+      {
+        ++output_counter;
+        OWP.writeFile(t, lattice_boltzmann);
+      }
 
       //! print variables
       if (detailed_results && t == settings.endTime)

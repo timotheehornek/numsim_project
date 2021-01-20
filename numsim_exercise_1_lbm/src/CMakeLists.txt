@@ -55,8 +55,10 @@ message("CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 #copy settings files to buid/src/
 file(COPY lid_driven_cavity.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY driven_cavity.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY vortex_street_rect.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY vortex_street_round.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 #copy settings files to build/
 file(COPY lid_driven_cavity.txt DESTINATION ${PROJECT_SOURCE_DIR}/../build)
-file(COPY driven_cavity.txt DESTINATION ${PROJECT_SOURCE_DIR}/../build)
+file(COPY vortex_street_rect.txt DESTINATION ${PROJECT_SOURCE_DIR}/../build)
+file(COPY vortex_street_round.txt DESTINATION ${PROJECT_SOURCE_DIR}/../build)

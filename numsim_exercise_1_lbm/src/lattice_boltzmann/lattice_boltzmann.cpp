@@ -20,8 +20,8 @@ Lattice_boltzmann::Lattice_boltzmann(const std::array<int, 2>& nCells, const std
 
 	m_obstacle{ nCells[0], nCells[1]},
 
-	m_dx{ physicalSize[0] / nCells[0] },
-	m_dy{ physicalSize[1] / nCells[1] },
+	m_dx{ physicalSize[0] / (nCells[0]) },
+	m_dy{ physicalSize[1] / (nCells[1]) },
 	m_re{ re },
 	m_g{ g },
 
@@ -47,30 +47,33 @@ void Lattice_boltzmann::set_dt()
 
 	assert(m_dt > 0);
 }
+
 //! compute the relaxtion parameter tau
-void Lattice_boltzmann::set_tau(double length)
+void Lattice_boltzmann::set_tau(double length, double max_vel)
 {
-	//compute maximal velocity
-  double vel_max = std::max(std::abs(m_u.abs_max()), std::abs(m_v.abs_max()));
 	//compute viscosity from reynolds number
-	double viscosity = vel_max * length / m_re;
+	double viscosity = max_vel * length / m_re;
 	//compute tau
-	double tau = 0.5 + 3.0 * m_lattice_factor * m_lattice_factor * viscosity;
+	double tau = 0.5 + 3.0 * viscosity / m_dx;
 	//set one over tau
 	m_one_over_tau = 1.0 / tau;
 
-	assert(m_one_over_tau < 2 && m_one_over_tau > 0.5);
+	//print relaxation factor
+	std::cout << "1/tau = " << m_one_over_tau << '\n';
+	assert(m_one_over_tau < 2);
 }
 
 //! manually set the relaxtion parameter tau
 void Lattice_boltzmann::set_tau_manually(double tau)
 {
+	//set one over tau
 	m_one_over_tau = 1.0/ tau;
-	assert(m_one_over_tau < 2 && m_one_over_tau > 0.5);
+
+	assert(m_one_over_tau < 2);
 }
 
-//! set the m_obstacle
-void Lattice_boltzmann::set_obstacle(const std::array<int, 4>& obstaclePos)
+//! set m_obstacle to match a rectangular object
+void Lattice_boltzmann::set_obstacle_rect(const std::array<int, 4>& obstaclePos)
 {
 	for (int i = obstaclePos[0]; i < obstaclePos[2]; i++)
 	{
@@ -78,6 +81,104 @@ void Lattice_boltzmann::set_obstacle(const std::array<int, 4>& obstaclePos)
 		{
 			// set obstacle bool on true
 			m_obstacle(i,j) = 1.0;
+		}
+	}
+}
+
+//! set m_obstacle to match a rectangular object
+void Lattice_boltzmann::set_obstacle_round(const std::array<int, 2>& obstacleCenter, double radius)
+{
+	for (int i = obstacleCenter[0] - radius ; i <= obstacleCenter[0] + radius; i++)
+	{
+		for (int j = obstacleCenter[1] - radius; j <= obstacleCenter[1] + radius; j++)
+		{
+			double distance = std::sqrt((obstacleCenter[0] - i) * (obstacleCenter[0] - i)
+											+ (obstacleCenter[1] - j) * (obstacleCenter[1] - j));
+			// if in radius set obstacle bool on true
+			if (distance < radius)
+			{
+				m_obstacle(i,j) = 1.0;
+			}
+		}
+	}
+}
+
+//! get max velocity set on boundary
+double Lattice_boltzmann::get_max_vel(const std::array<bool, 4>& useDirichletBc,
+		const std::array<double, 2>& bcBottom, const std::array<double, 2>& bcTop,
+		const std::array<double, 2>& bcLeft, const std::array<double, 2>& bcRight) const
+{
+	double max_vel = 0.0;
+	//check bottom boundary
+	if (useDirichletBc[0])
+	{
+		if (std::abs(bcBottom[0]) > max_vel)
+		{
+			max_vel = std::abs(bcBottom[0]);
+		}
+		if (std::abs(bcBottom[1]) > max_vel)
+		{
+			max_vel = std::abs(bcBottom[1]);
+		}
+	}
+	//check top boundary
+	if (useDirichletBc[1])
+	{
+		if (std::abs(bcTop[0]) > max_vel)
+		{
+			max_vel = std::abs(bcTop[0]);
+		}
+		if (std::abs(bcTop[1]) > max_vel)
+		{
+			max_vel = std::abs(bcTop[1]);
+		}
+	}
+	//check left boundary
+	if (useDirichletBc[2])
+	{
+		if (std::abs(bcLeft[0]) > max_vel)
+		{
+			max_vel = std::abs(bcLeft[0]);
+		}
+		if (std::abs(bcLeft[1]) > max_vel)
+		{
+			max_vel = std::abs(bcLeft[1]);
+		}
+	}
+	//check right boundary
+	if (useDirichletBc[3])
+	{
+		if (std::abs(bcRight[0]) > max_vel)
+		{
+			max_vel = std::abs(bcRight[0]);
+		}
+		if (std::abs(bcRight[1]) > max_vel)
+		{
+			max_vel = std::abs(bcRight[1]);
+		}
+	}
+	std::cout << "max_vel = " << max_vel << '\n';
+	return max_vel;
+}
+
+//! initialize f_vector in equilibrium state
+void Lattice_boltzmann::initialize_f(double density, std::array<Array2D, 9>& input)
+{
+	for(int i = 0; i < m_nCells[0]; i++)
+	{
+		for(int j = 0; j < m_nCells[1]; j++)
+		{
+			input[0](i,j) = 4.0 / 9.0 * density;
+
+			input[1](i,j) = 1.0 / 9.0 * density;
+			input[2](i,j) = 1.0 / 9.0 * density;
+			input[3](i,j) = 1.0 / 9.0 * density;
+			input[4](i,j) = 1.0 / 9.0 * density;
+
+			input[5](i,j) = 1.0 / 36.0 * density;
+			input[6](i,j) = 1.0 / 36.0 * density;
+			input[7](i,j) = 1.0 / 36.0 * density;
+			input[8](i,j) = 1.0 / 36.0 * density;
 		}
 	}
 }
@@ -124,7 +225,7 @@ const double Lattice_boltzmann::p(int i, int j) const
 	return m_p(i,j);
 }
 
-
+//! compute rho by summing over all f
 double Lattice_boltzmann::compute_rho(int i, int j, const std::array<Array2D, 9>& input) const
 {
   double rho = 0;
@@ -135,6 +236,7 @@ double Lattice_boltzmann::compute_rho(int i, int j, const std::array<Array2D, 9>
   return rho;
 }
 
+//! compute u by multipliing all f with the first components of the corresponding lattice vectors
 double Lattice_boltzmann::compute_u(int i, int j, const std::array<Array2D, 9>& input) const
 {
   double vel_u = input[1](i,j) + input[5](i,j) + input[8](i,j)
@@ -142,20 +244,17 @@ double Lattice_boltzmann::compute_u(int i, int j, const std::array<Array2D, 9>& 
   return vel_u;
 }
 
+//! compute v by multipliing all f with the first components of the corresponding lattice vectors
 double Lattice_boltzmann::compute_v(int i, int j, const std::array<Array2D, 9>& input) const
 {
   double vel_v = input[2](i,j) + input[5](i,j) + input[6](i,j)
-           - (input[4](i,j) + input[7](i,j) + input[8](i,j));
+           		 - (input[4](i,j) + input[7](i,j) + input[8](i,j));
   return vel_v;
 }
 
-void Lattice_boltzmann::collide(int i, int j, std::array<Array2D, 9>& input)
+//! compute the f_eq and the relaxate towards the equilibrium
+void Lattice_boltzmann::collide(int i, int j, double density, double vel_u, double vel_v, std::array<Array2D, 9>& input)
 {
-	//compute hydrodynamic quantities
-	double density = compute_rho(i, j, input);
-	double vel_u = compute_u(i, j, input);
-	double vel_v = compute_v(i, j, input);
-
 	//stores values for visualization
 	m_p(i,j) = density; //density / (3 * m_lattice_factor * m_lattice_factor);
 	m_u(i,j) = vel_u;
@@ -171,58 +270,58 @@ void Lattice_boltzmann::collide(int i, int j, std::array<Array2D, 9>& input)
   //compute equilibrium
   f_eq = 4.0 / 9.0 * (density - abs_vel);
   //relaxte towards equilibrium
-  input[0](i,j) -= m_one_over_tau * (input[0](i,j) - f_eq);
+	input[0](i,j) = (1.0 - m_one_over_tau) * input[0](i,j) + m_one_over_tau * f_eq;
 
   //right
   //compute equilibrium
   f_eq = 1.0 / 9.0 * (density + 3.0 * m_lattice_factor * vel_u + 4.5 * m_lattice_factor * m_lattice_factor * vel_u * vel_u - abs_vel);
   //relaxte towards equilibrium
-  input[1](i,j) -= m_one_over_tau * (input[1](i,j) - f_eq);
+	input[1](i,j) = (1.0 - m_one_over_tau) * input[1](i,j) + m_one_over_tau * f_eq;
 
   //top
   //compute equilibrium
   f_eq = 1.0 / 9.0 * (density + 3.0 * m_lattice_factor * vel_v + 4.5 * m_lattice_factor * m_lattice_factor * vel_v * vel_v - abs_vel);
   //relaxte towards equilibrium
-  input[2](i,j) -= m_one_over_tau * (input[2](i,j) - f_eq);
+	input[2](i,j) = (1.0 - m_one_over_tau) * input[2](i,j) + m_one_over_tau * f_eq;
 
   //left
   //compute equilibrium
   f_eq = 1.0 / 9.0 * (density - 3.0 * m_lattice_factor * vel_u + 4.5 * m_lattice_factor * m_lattice_factor * vel_u * vel_u - abs_vel);
   //relaxte towards equilibrium
-  input[3](i,j) -= m_one_over_tau * (input[3](i,j) - f_eq);
-	//std::cout << "f_left at" << i <<","<< j << " = " << input[3](i,j) << std::endl;
+	input[3](i,j) = (1.0 - m_one_over_tau) * input[3](i,j) + m_one_over_tau * f_eq;
 
   //bottom
   //compute equilibrium
   f_eq = 1.0 / 9.0 * (density - 3.0 * m_lattice_factor * vel_v + 4.5 * m_lattice_factor * m_lattice_factor * vel_v * vel_v - abs_vel);
   //relaxte towards equilibrium
-  input[4](i,j) -= m_one_over_tau * (input[4](i,j) - f_eq);
+	input[4](i,j) = (1.0 - m_one_over_tau) * input[4](i,j) + m_one_over_tau * f_eq;
 
   //top-right
   //compute equilibrium
   f_eq = 1.0 / 36.0 * (density + 3.0 * m_lattice_factor * (vel_u + vel_v) + 4.5 * m_lattice_factor * m_lattice_factor * (vel_u + vel_v) * (vel_u + vel_v) - abs_vel);
   //relaxte towards equilibrium
-  input[5](i,j) -= m_one_over_tau * (input[5](i,j) - f_eq);
+	input[5](i,j) = (1.0 - m_one_over_tau) * input[5](i,j) + m_one_over_tau * f_eq;
 
   //top-left
   //compute equilibrium
-  f_eq = 1.0 / 36.0 * (density + 3.0 * m_lattice_factor * (-vel_u + vel_v) + 4.5 * m_lattice_factor * m_lattice_factor * (-vel_u + vel_v) * (-vel_u - vel_v) - abs_vel);
-  //relaxte towards equilibrium
-  input[6](i,j) -= m_one_over_tau * (input[6](i,j) - f_eq);
+  f_eq = 1.0 / 36.0 * (density + 3.0 * m_lattice_factor * (-vel_u + vel_v) + 4.5 * m_lattice_factor * m_lattice_factor * (-vel_u + vel_v) * (-vel_u + vel_v) - abs_vel);
+	//relaxte towards equilibrium
+	input[6](i,j) = (1.0 - m_one_over_tau) * input[6](i,j) + m_one_over_tau * f_eq;
 
   //bottom-left
   //compute equilibrium
   f_eq = 1.0 / 36.0 * (density - 3.0 * m_lattice_factor * (vel_u + vel_v) + 4.5 * m_lattice_factor * m_lattice_factor * (vel_u + vel_v) * (vel_u + vel_v) - abs_vel);
-  //relaxte towards equilibrium
-  input[7](i,j) -= m_one_over_tau * (input[7](i,j) - f_eq);
+	//relaxte towards equilibrium
+	input[7](i,j) = (1.0 - m_one_over_tau) * input[7](i,j) + m_one_over_tau * f_eq;
 
   //bottom right
   //compute equilibrium
   f_eq = 1.0 / 36.0 * (density + 3.0 * m_lattice_factor * (vel_u - vel_v) + 4.5 * m_lattice_factor * m_lattice_factor * (vel_u - vel_v) * (vel_u - vel_v) - abs_vel);
   //relaxte towards equilibrium
-  input[8](i,j) -= m_one_over_tau * (input[8](i,j) - f_eq);
+	input[8](i,j) = (1.0 - m_one_over_tau) * input[8](i,j) + m_one_over_tau * f_eq;
 }
 
+//! bounceback (swap) values as object cell at i,j
 void Lattice_boltzmann::bounceback(int i, int j, std::array<Array2D, 9>& input)
 {
   //full-way bounceback opposite values
@@ -279,6 +378,7 @@ void Lattice_boltzmann::stream(int i, int j, const std::array<Array2D, 9>& input
 	output[8](i + 1, j - 1) = input[8](i, j);
 }
 
+//! run two lattice iteration with input and output on all inner nodes
 void Lattice_boltzmann::two_lattice(std::array<Array2D, 9>& input, std::array<Array2D, 9>& output)
 {
   //get loop size
@@ -290,7 +390,7 @@ void Lattice_boltzmann::two_lattice(std::array<Array2D, 9>& input, std::array<Ar
   {
     for(int j = 1; j < size_y - 1; j++)
     {
-			//std::cout << m_obstacle(i,j) << '\n';
+			//check if obstacle and choose bounceback or collide step
       if(m_obstacle(i,j))
       {
         //obstacle cells bounceback instead collide step
@@ -299,13 +399,13 @@ void Lattice_boltzmann::two_lattice(std::array<Array2D, 9>& input, std::array<Ar
       else
       {
         //collide step
-        collide(i, j, input);
+        collide(i, j, compute_rho(i,j, input), compute_u(i,j, input), compute_v(i,j, input), input);
       }
 
 			//stream step
 			stream(i, j, input, output);
-    }
-  }
+		}
+	}
 }
 
 void Lattice_boltzmann::boundary_treatment(
@@ -320,7 +420,7 @@ void Lattice_boltzmann::boundary_treatment(
 	//< type of boundary condition true for Dirichlet and false for Neumann
 
 	//define pressure for outflow boundaries
-	double p_in = 1.0;// 1.001; //left or bottom pressure inflow boundary
+	double p_in = 1.0;//1.01; //left or bottom pressure inflow boundary
 	double p_out = 1.0;
 
   //get loop size
@@ -332,7 +432,6 @@ void Lattice_boltzmann::boundary_treatment(
 	double i, j, density, f_buried;
   //////////////////////////////////////////////////////////////////////////////
   //top-right corner
-	//bottom-left corner -> index (0,0)
 	i = size_x - 1;
 	j = size_y - 1;
 	//compute missing values
@@ -356,7 +455,7 @@ void Lattice_boltzmann::boundary_treatment(
 	input[0](i,j)= 16.0 * f_buried;
 
 	//normal collide step
-	collide(i, j, input);
+	collide(i, j, compute_rho(i,j, input), compute_u(i,j, input), compute_v(i,j, input), input);
 
 	//modified stream step -> send values into domain
 	//send input values to neighbor cells in output vector
@@ -393,10 +492,10 @@ void Lattice_boltzmann::boundary_treatment(
 
 	input[5](i, j) = f_buried;
 	input[7](i, j) = f_buried;
-	input[0](i,j)= 16.0 * f_buried;
+	input[0](i, j)= 16.0 * f_buried;
 
 	//normal collide step
-	collide(i, j, input);
+	collide(i, j, compute_rho(i,j, input), compute_u(i,j, input), compute_v(i,j, input), input);
 
 	//modified stream step -> send values into domain
 	//send input values to neighbor cells in output vector
@@ -429,7 +528,7 @@ void Lattice_boltzmann::boundary_treatment(
 	input[0](i,j)= 16.0 * f_buried;
 
 	//normal collide step
-	collide(i, j, input);
+	collide(i, j, compute_rho(i,j, input), compute_u(i,j, input), compute_v(i,j, input), input);
 
 	//modified stream step -> send values into domain
 	//send input values to neighbor cells in output vector
@@ -469,7 +568,7 @@ void Lattice_boltzmann::boundary_treatment(
 	input[0](i,j)= 16.0 * f_buried;
 
 	//normal collide step
-	collide(i, j, input);
+	collide(i, j, compute_rho(i,j, input), compute_u(i,j, input), compute_v(i,j, input), input);
 
 	//modified stream step -> send values into domain
 	//send input values to neighbor cells in output vector
@@ -501,14 +600,14 @@ void Lattice_boltzmann::boundary_treatment(
 		}
 		else
 		{//Dirichlet -- inflow or no-slip boundary
-			vel_u_right = bcRight[0];// * j * (size_y - 1 - j); //velocity profile;
+			vel_u_right = bcRight[0];// * 4.0 * j * (size_y - 1 - j) / (size_y - 1 * size_y - 1); //velocity profile doesnt work xD
 			vel_v_right = bcRight[1];
 		}
 
 		//set correction terms
 		correction_left = - 2.0 / 3.0 * m_lattice_factor * vel_u_right;
 		correction_top_left = - 0.5 * (input[2](i, j) - input[4](i, j)) + 0.5 * m_lattice_factor * vel_v_right - 1.0 / 6.0 * m_lattice_factor * vel_u_right;
-		correction_bottom_left = 0.5 * (input[2](i, j) - input[4](i, j)) - 0.5 * m_lattice_factor * vel_v_right - 1.0 / 6.0 * m_lattice_factor * vel_u_right;
+		correction_bottom_left = 0.5 * (input[2](i, j) - input[4](i, j)) - 0.5 * m_lattice_factor * vel_v_right - 1.0 / 6.0 * m_lattice_factor * vel_u_right;;
 
     //half-way bounceback the values of the inner cell pointing out of the domain
     input[3](i, j) = input[1](i, j) + correction_left;
@@ -516,7 +615,7 @@ void Lattice_boltzmann::boundary_treatment(
     input[7](i, j) = input[5](i, j) + correction_bottom_left;
 
 		//normal collide step
-		collide(i, j, input);
+		collide(i, j, compute_rho(i,j, input), vel_u_right, vel_v_right, input);
 
 		//modified stream step -> send values into domain
 		//send input values to neighbor cells in output vector
@@ -550,7 +649,7 @@ void Lattice_boltzmann::boundary_treatment(
 		}
 		else
 		{//Dirichlet -- inflow or no-slip boundary
-			vel_u_left = bcLeft[0];// * j * (size_y - 1 - j); //velocity profile;
+			vel_u_left = bcLeft[0];// * 4.0 * j * (size_y - 1 - j) / (size_y - 1 * size_y - 1); //velocity profile doesnt work xD
 			vel_v_left = bcLeft[1];
 		}
 
@@ -565,7 +664,7 @@ void Lattice_boltzmann::boundary_treatment(
     input[8](i, j) = input[6](i, j) + correction_bottom_right;
 
 		//normal collide step
-		collide(i, j, input);
+		collide(i, j, compute_rho(i,j, input), vel_u_left, vel_v_left, input);
 
 		//modified stream step -> send values into domain
 		//send input values to neighbor cells in output vector
@@ -575,7 +674,6 @@ void Lattice_boltzmann::boundary_treatment(
 		output[4](i, j - 1) = input[4](i, j);
 		output[5](i + 1, j + 1) = input[5](i, j);
 		output[8](i + 1, j - 1) = input[8](i, j);
-
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -601,7 +699,7 @@ void Lattice_boltzmann::boundary_treatment(
 		else
 		{//Dirichlet -- inflow or no-slip boundary
 			vel_u_top = bcTop[0];
-			vel_v_top = bcTop[1];// * i * (size_x - 1 - i); //velocity profile;
+			vel_v_top = bcTop[1];// * i * (size_x - 1 - i); //velocity profile doesnt work xD
 		}
 
 		//set correction terms
@@ -615,7 +713,7 @@ void Lattice_boltzmann::boundary_treatment(
     input[8](i, j) = input[6](i, j) + correction_right_bottom;
 
 		//normal collide step
-		collide(i, j, input);
+		collide(i, j, compute_rho(i,j, input), vel_u_top, vel_v_top, input);
 
 		//modified stream step -> send values into domain
 		//send input values to neighbor cells in output vector
@@ -650,7 +748,7 @@ void Lattice_boltzmann::boundary_treatment(
 		else
 		{//Dirichlet -- inflow or no-slip boundary
 			vel_u_bottom = bcBottom[0];
-			vel_v_bottom = bcBottom[1]; // * i * (size_x - 1 - i); //velocity profile;
+			vel_v_bottom = bcBottom[1]; // * i * (size_x - 1 - i); //velocity profile doesnt work xD
 		}
 
 		//set correction terms
@@ -664,7 +762,7 @@ void Lattice_boltzmann::boundary_treatment(
     input[6](i, j) = input[8](i, j) + correction_left_top;
 
 		//normal collide step
-		collide(i, j, input);
+		collide(i, j, compute_rho(i,j, input), vel_u_bottom , vel_v_bottom, input);
 
 		//modified stream step -> send values into domain
 		//send input values to neighbor cells in output vector
