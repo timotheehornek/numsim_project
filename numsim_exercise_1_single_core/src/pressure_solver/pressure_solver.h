@@ -15,8 +15,6 @@
 class Pressure_solver
 {
 protected:
-	std::array<bool,4> m_p_0_boundary; //< p=0 in boundary cell
-	
 	enum VARS
 	{
 		VAR_U,
@@ -39,14 +37,20 @@ protected:
 	double residual(Discretization& discr) const;
 
 public:
-	Pressure_solver(double eps, double max_it, const std::array<bool,4>& p_0_boundary);
+	Pressure_solver(double eps, double max_it);
 	
 	//! run solver
 	//void solver(Array2D& p, const Array2D& RHS)const;
-	void solver(Discretization& discr) const;
+	void solver(Discretization& discr,
+	const std::array<double, 2> &bcBottom, const std::array<double, 2> &bcTop,
+	const std::array<double, 2> &bcLeft, const std::array<double, 2> &bcRight,
+	const std::array<bool, 4> &useDirichletBc) const;
 
 	//! run one iteration step
 	//virtual void run_it_step(Array2D& p, const Array2D& RHS, const std::array<int, 2> size) const = 0;
-	virtual void run_it_step(Discretization& discr) const = 0;
+	virtual void run_it_step(Discretization& discr,
+	const std::array<double, 2> &bcBottom, const std::array<double, 2> &bcTop,
+	const std::array<double, 2> &bcLeft, const std::array<double, 2> &bcRight,
+	const std::array<bool, 4> &useDirichletBc) const = 0;
 	
 };

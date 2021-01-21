@@ -1,12 +1,12 @@
 #include "pressure_solver.h"
 
 
-Pressure_solver::Pressure_solver(double eps, double max_it, const std::array<bool,4>& p_0_boundary)
-	: m_eps{ eps }, m_max_it{ max_it }, m_p_0_boundary{p_0_boundary}{}
+Pressure_solver::Pressure_solver(double eps, double max_it)
+	: m_eps{ eps }, m_max_it{ max_it }{}
 
 
 //double Pressure_solver::residual(const Array2D& p, const Array2D& RHS) const
-	double Pressure_solver::residual(Discretization& discr) const
+double Pressure_solver::residual(Discretization& discr) const
 {
 	//! get array size
 	std::array<int, 2>size = discr.p().size();
@@ -40,7 +40,10 @@ Pressure_solver::Pressure_solver(double eps, double max_it, const std::array<boo
 
 //! implementation of pressure solver
 //void Pressure_solver::solver(Array2D& p, const Array2D& RHS) const
-void Pressure_solver::solver(Discretization& discr) const
+void Pressure_solver::solver(Discretization& discr,
+	const std::array<double, 2> &bcBottom, const std::array<double, 2> &bcTop,
+	const std::array<double, 2> &bcLeft, const std::array<double, 2> &bcRight,
+	const std::array<bool, 4> &useDirichletBc) const
 {
 	//! get array size
 	std::array<int, 2>size = discr.p().size();
@@ -51,7 +54,7 @@ void Pressure_solver::solver(Discretization& discr) const
 	int it_counter{ 0 };
 	do
 	{
-		run_it_step(discr);
+		run_it_step(discr, bcBottom, bcTop, bcLeft, bcRight, useDirichletBc);
 		res = residual(discr);
 		++it_counter;
 	} while (res > m_eps && it_counter < m_max_it);

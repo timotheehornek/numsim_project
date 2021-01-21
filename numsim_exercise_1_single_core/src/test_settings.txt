@@ -1,27 +1,32 @@
 # Settings file for numsim program
-# Run ./numsim lid_driven_cavity.txt
+# Run ./numsim test_settings.txt
 
 # Problem description
-physicalSizeX = 4.0#5.0 #4.0   # physical size of the domain
-physicalSizeY = 1.0#1.0 #2.0
-endTime = 30.0        # duration of the simulation
-re = 650#30#1222             # Reynolds number
+physicalSizeX = 4.0   # physical size of the domain
+physicalSizeY = 1.0
+endTime = 20.0        # duration of the simulation
+re = 650              # Reynolds number
 gX = 0.0              # external forces, set to (gX,gY) = (0,-9.81) to account for gravity
 gY = 0.0
 
 # Boundary conditions
+# true: Dirichlet for velocity, Neumann for pressure (zero gradient)
+#   => can be used for: NOSLIP, Dirichlet velocities (all + Neumann pressure)
+# false: Neumann for velocity (zero gradient), Dirichlet for pressure
+#   => can be used for: OUTFLOW velocities + Dirichlet pressure
 useDirichletBcBottom = true
 useDirichletBcTop    = true
 useDirichletBcLeft   = false
 useDirichletBcRight  = false
-bcBottomX = 0#-0.1
-bcBottomY = 0#0.2
-bcTopX    = 0#0.5
-bcTopY    = 0#0.2
-bcLeftX   = 0#.1#-0.1
-bcLeftY   = 0#0
-bcRightX  = 0#-0.1
-bcRightY  = 0
+# Dirichlet boundary condition values (only relevant ones will be used)
+bcBottomX = 0   # Dirichlet velocity
+bcBottomY = 0   # Dirichlet velocity/pressure
+bcTopX    = 0   # Dirichlet velocity
+bcTopY    = 0   # Dirichlet velocity/pressure
+bcLeftX   = 1   # Dirichlet velocity/pressure
+bcLeftY   = 0   # Dirichlet velocity
+bcRightX  = 0   # Dirichlet velocity/pressure
+bcRightY  = 0   # Dirichlet velocity
 
 # obstacle declaration (w.r.t. nCellsX and nCellsY; see discretization parameters)
 obstLoLeX = 35
@@ -30,8 +35,8 @@ obstUpRiX = 45
 obstUpRiY = 25
 
 # Discretization parameters
-nCellsX = 160 #100 #40          # number of cells in x and y direction
-nCellsY = 41 #20 #30
+nCellsX = 160#640         # number of cells in x and y direction
+nCellsY = 41#160
 useDonorCell = true   # if donor cell discretization should be used, possible values: true false
 alpha = 0.5           # factor for donor-cell scheme, 0 is equivalent to central differences
 tau = 0.5             # safety factor for time step width

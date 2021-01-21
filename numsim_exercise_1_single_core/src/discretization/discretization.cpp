@@ -289,7 +289,6 @@ bool Discretization::is_in_obstacle(int i, int j, int var)
 	default:
 		return false;
 	}
-	
 }
 
 void Discretization::compute_bound_val_obstacle()
@@ -315,18 +314,29 @@ void Discretization::compute_bound_val_obstacle()
 	}
 }
 
-
-void Discretization::update_bound_val_FG()
+void Discretization::update_bound_val_FG(const std::array<bool, 4> &useDirichletBc)
 {
-	// set F
-	for (int j{1}; j < m_u.y_max() - 1; ++j)
-	{
-		// right boundary
-		// for Neumann
-		m_F(m_u.x_max() - 1, j) = 2*m_u(m_u.x_max() - 1, j)-m_u_old(m_u.x_max() - 1, j);
-		m_F(0, j) = 2*m_u(0, j)-m_u_old(0, j);
-	}
-	m_u_old=m_u;
+	// update F if Neumann for velocity on respective boundary
+	if (!useDirichletBc[LEFT])
+		for (int j{1}; j < m_u.y_max() - 1; ++j) //< left boundary
+			m_F(0, j) = 2 * m_u(0, j) - m_u_old(0, j);
+	if (!useDirichletBc[RIGHT])
+		for (int j{1}; j < m_u.y_max() - 1; ++j) //< right boundary
+			m_F(m_u.x_max() - 1, j) = 2 * m_u(m_u.x_max() - 1, j) - m_u_old(m_u.x_max() - 1, j);
+	// backup u if needed
+	if (!useDirichletBc[LEFT] || !useDirichletBc[RIGHT])
+		m_u_old = m_u;
+
+	// update G if Neumann for velocity on respective boundary
+	if (!useDirichletBc[BOTTOM])
+		for (int i{0}; i < m_v.x_max() - 1; ++i) //< bottom boundary
+			m_G(i, 0) = 2 * m_v(i, 0) - m_v_old(i, 0);
+	if (!useDirichletBc[TOP])
+		for (int i{0}; i < m_v.x_max() - 1; ++i) //< top boundary
+			m_G(i, m_v.y_max() - 1) = 2 * m_v(i, m_v.y_max() - 1) - m_v_old(i, m_v.y_max() - 1);
+	// backup v if needed
+	if (!useDirichletBc[BOTTOM] || !useDirichletBc[TOP])
+		m_v_old = m_v;
 }
 
 void Discretization::setup_bound_val_FG()
@@ -358,11 +368,11 @@ void Discretization::compute_FG()
 	{
 		for (int i{1}; i < m_u.x_max() - 1; ++i)
 		{
-			if(!is_in_obstacle(i, j, VAR_U)) //< check if outside obstacle
+			if (!is_in_obstacle(i, j, VAR_U))												   //< check if outside obstacle
 				m_F(i, j) = m_u(i, j)														   //< u at i,j
 							+ m_dt * (1 / m_re * (compute_du_dx2(i, j) + compute_du_dy2(i, j)) //< diffusion term
-									- compute_du2_dx(i, j) - compute_duv_dy(i, j)			   //< convection terms
-									+ m_g[0]);											   //< external force term (g_y)
+									  - compute_du2_dx(i, j) - compute_duv_dy(i, j)			   //< convection terms
+									  + m_g[0]);											   //< external force term (g_y)
 		}
 	}
 
@@ -371,11 +381,11 @@ void Discretization::compute_FG()
 	{
 		for (int i{1}; i < m_v.x_max() - 1; ++i)
 		{
-			if(!is_in_obstacle(i, j, VAR_V)) //< check if outside obstacle
+			if (!is_in_obstacle(i, j, VAR_V))												   //< check if outside obstacle
 				m_G(i, j) = m_v(i, j)														   //< v at i,j
 							+ m_dt * (1 / m_re * (compute_dv_dx2(i, j) + compute_dv_dy2(i, j)) //< diffusion term
-									- compute_duv_dx(i, j) - compute_dv2_dy(i, j)			   //< convection terms
-									+ m_g[1]);											   //< external force term (g_x)
+									  - compute_duv_dx(i, j) - compute_dv2_dy(i, j)			   //< convection terms
+									  + m_g[1]);											   //< external force term (g_x)
 		}
 	}
 }
@@ -390,9 +400,9 @@ void Discretization::compute_RHS()
 	{
 		for (int i{1}; i < m_RHS.size()[0] - 1; ++i)
 		{
-			if(!is_in_obstacle(i, j, VAR_P)) //< check if outside obstacle
+			if (!is_in_obstacle(i, j, VAR_P))									 //< check if outside obstacle
 				m_RHS(i, j) = 1 / m_dt * ((m_F(i, j) - m_F(i - 1, j)) / m_dx	 //< momentum u
-										+ (m_G(i, j) - m_G(i, j - 1)) / m_dy); //< momentum v
+										  + (m_G(i, j) - m_G(i, j - 1)) / m_dy); //< momentum v
 		}
 	}
 }

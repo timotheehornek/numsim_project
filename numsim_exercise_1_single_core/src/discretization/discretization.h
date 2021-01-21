@@ -96,7 +96,7 @@ public:
 	void setup_bound_val_FG();
 
 	//! compute and update boundary values of F and G
-	void update_bound_val_FG();
+	void update_bound_val_FG(const std::array<bool, 4> &useDirichletBc);
 
 	// compute and update F and G
 	void compute_FG();

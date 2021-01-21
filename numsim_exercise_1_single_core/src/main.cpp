@@ -36,18 +36,22 @@ int main(int argc, char *argv[])
 
     //! setup ouput writer
     std::array<double, 2> meshWidth = {discretization->dx(), discretization->dy()};
-    OutputWriterParaview OWP{ discretization , meshWidth, settings.nCells };
+    OutputWriterParaview OWP{discretization, meshWidth, settings.nCells};
     //OutputWriterText OWT{ discretization };
+    int output_counter{0}; //< counter to keep track of output times
 
     //! initialize pressure solver
-	std::array<bool,4> p_0_boundary{
-		settings.useDirichletBc[0]==false||settings.bcBottom[1]!=0,
-		settings.useDirichletBc[1]==false||settings.bcTop[1]!=0,
-		settings.useDirichletBc[2]==false||settings.bcLeft[0]!=0,
-		settings.useDirichletBc[3]==false||settings.bcRight[0]!=0,
-	}; //< set pressure boundary conditions (p=0 if true; Neumann otherwise)
+    /*
+    std::array<bool, 4> p_0_boundary{
+        settings.useDirichletBc[0] == false || settings.bcBottom[1] != 0,
+        settings.useDirichletBc[1] == false || settings.bcTop[1] != 0,
+        settings.useDirichletBc[2] == false || settings.bcLeft[0] != 0,
+        settings.useDirichletBc[3] == false || settings.bcRight[0] != 0,
+    }; //< set pressure boundary conditions (p=0 if true; Neumann otherwise)
+    */
+
     std::shared_ptr<Pressure_solver> pressure_solver;
-	/*
+    /*
     if (settings.pressureSolver == "GaussSeidel")
         pressure_solver = std::make_shared<Gauss_seidel>(
             discretization->dx(), discretization->dy(),
@@ -56,8 +60,8 @@ int main(int argc, char *argv[])
         pressure_solver = std::make_shared<SOR>(
             discretization->dx(), discretization->dy(),
             settings.epsilon, settings.maximumNumberOfIterations, settings.omega);*/
-	pressure_solver = std::make_shared<SOR>(
-            settings.epsilon, settings.maximumNumberOfIterations, settings.omega, p_0_boundary);
+    pressure_solver = std::make_shared<SOR>(
+        settings.epsilon, settings.maximumNumberOfIterations, settings.omega);
 
     //! load boundaries for velocities u and v
     discretization->setup_bound_val_uv(
@@ -71,11 +75,11 @@ int main(int argc, char *argv[])
     //! simulation time setup
     double t{0.0};
 
+    
     while (t < settings.endTime) // <= iterate through time span
-    //while (t==0.0)
-	{
+                                 //while (t==0.0)
+    {
 
-        
         //! compute and update boundary using boundary conditions of u and v around domain
         discretization->update_bound_val_uv(
             settings.bcBottom, settings.bcTop,
@@ -99,28 +103,37 @@ int main(int argc, char *argv[])
         //! compute and update F and G
         discretization->compute_FG();
 
-        discretization->update_bound_val_FG();
+        discretization->update_bound_val_FG(settings.useDirichletBc);
 
         //! compute and update RHS
         discretization->compute_RHS();
 
         //! solve pressure equation and update p
         //pressure_solver->solver(discretization->p_ref(), discretization->RHS());
-		pressure_solver->solver(*discretization);
+        pressure_solver->solver(*discretization,
+                                settings.bcBottom, settings.bcTop,
+                                settings.bcLeft, settings.bcRight,
+                                settings.useDirichletBc);
 
         //! compute and update u and v
         discretization->compute_uv();
-		
-		//! compute u and v around boundary
-		discretization->compute_bound_val_obstacle();
 
-        //! write results to output
-        OWP.writeFile(t);
-        //OWT.writeFile(t);
+        //! compute u and v around boundary
+        discretization->compute_bound_val_obstacle();
+
+        //! write results to output every 1/10 s
+        if(output_counter==static_cast<int>(10*t))
+        {
+            assert(settings.maximumDt<=.1);
+            OWP.writeFile(t);
+            //OWT.writeFile(t);
+            ++output_counter;
+        }
+        
 
         //! print variables
-        if (detailed_results&&false)
-		//if(true)
+        if (detailed_results && false)
+        //if(true)
         {
             DEBUG_PRINT(
                 "Current result overview:\n"
@@ -135,8 +148,7 @@ int main(int argc, char *argv[])
                 //<< "G:\n"
                 //<< discretization->G()
                 << "RHS:\n"
-                << discretization->RHS()
-                );
+                << discretization->RHS());
         }
     }
     RELEASE_PRINT('\n'); //< stop overwriting of time status line
