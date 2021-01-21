@@ -20,24 +20,31 @@ void SOR::run_it_step(Discretization& discr) const
 						+ (discr.p(i, j - 1) + discr.p(i, j + 1)) / std::pow(discr.dy(), 2)					   //< vertical term
 						- discr.RHS(i, j));															//< right hand side       
 		}
+		discr.p_ref(0, j) = 2*1.-discr.p(1, j);//discr.p(1, j);
+		discr.p_ref(discr.p().size()[0] - 1, j) = 2*0-discr.p(discr.p().size()[0] - 2, j);//discr.p(discr.p().size()[0] - 2, j);
 	}
-	
-	
+	//! update boundary values on bottom and top
+	for (int i{ 0 }; i < discr.p().size()[0] ; ++i)
+	{
+		discr.p_ref(i, 0) = discr.p(i, 1);
+		discr.p_ref(i, discr.p().size()[1] - 1) = discr.p(i, discr.p().size()[1] - 2);
+	}
+	/*
 	//! update boundary values on left and right
-	if (!m_p_0_boundary[LEFT])
+	//if (!m_p_0_boundary[LEFT])
 		for (int j{ 1 }; j < discr.p().size()[1] - 1; ++j)
-			discr.p_ref(0, j) =discr.p(1, j);
-	if (!m_p_0_boundary[RIGHT])
+			discr.p_ref(0, j) =1.-discr.p(1, j);//discr.p(1, j);
+	//if (!m_p_0_boundary[RIGHT])
 		for (int j{ 1 }; j < discr.p().size()[1] - 1; ++j)
-			discr.p_ref(discr.p().size()[0] - 1, j) =discr.p(discr.p().size()[0] - 2, j);
+			discr.p_ref(discr.p().size()[0] - 1, j) = -discr.p(discr.p().size()[0] - 2, j);//discr.p(discr.p().size()[0] - 2, j);
 
 	//! update boundary values on bottom and top
-	if (!m_p_0_boundary[BOTTOM])
+	//if (!m_p_0_boundary[BOTTOM])
 		for (int i{ 0 }; i < discr.p().size()[0] ; ++i)
 			discr.p_ref(i, 0) = discr.p(i, 1);
-	if (!m_p_0_boundary[BOTTOM])
+	//if (!m_p_0_boundary[TOP])
 		for (int i{ 0 }; i < discr.p().size()[0] ; ++i)
-			discr.p_ref(i, discr.p().size()[1] - 1) = discr.p(i, discr.p().size()[1] - 2);
+			discr.p_ref(i, discr.p().size()[1] - 1) = discr.p(i, discr.p().size()[1] - 2);*/
 	
 	
 	//! update boundary values around obstacle

@@ -2,6 +2,7 @@
 
 #include "array2d/array2d.h"
 
+
 #include <array>
 #include <cassert>
 #include <initializer_list>
@@ -17,6 +18,12 @@ public:
 	Staggered_grid(const std::array<int, 2>& size);
 	//! constructor for initializer list
 	Staggered_grid(const std::initializer_list<int>& l);
+
+	//! copy constructor
+	Staggered_grid(const Staggered_grid &copy);
+
+	//! overloaded assignment
+	Staggered_grid& operator= (const Staggered_grid &copy);
 
 	//! return max index in x direction
 	double x_max() const;

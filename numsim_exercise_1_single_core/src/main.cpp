@@ -3,7 +3,7 @@
 int main(int argc, char *argv[])
 {
     //! print detailed results (u, v, p, F, G and RHS) in debug mode
-    bool detailed_results{false};
+    bool detailed_results{true};
 
     //! specify and output input file (as argument on Linux and here in Windows)
     std::string file_name{};
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
         settings.useDirichletBc);
 
     //! compute and set boundary values of F and G
-    discretization->compute_bound_val_FG();
+    discretization->setup_bound_val_FG();
 
     //! simulation time setup
     double t{0.0};
@@ -74,6 +74,8 @@ int main(int argc, char *argv[])
     while (t < settings.endTime) // <= iterate through time span
     //while (t==0.0)
 	{
+
+        
         //! compute and update boundary using boundary conditions of u and v around domain
         discretization->update_bound_val_uv(
             settings.bcBottom, settings.bcTop,
@@ -97,6 +99,8 @@ int main(int argc, char *argv[])
         //! compute and update F and G
         discretization->compute_FG();
 
+        discretization->update_bound_val_FG();
+
         //! compute and update RHS
         discretization->compute_RHS();
 
@@ -115,23 +119,24 @@ int main(int argc, char *argv[])
         //OWT.writeFile(t);
 
         //! print variables
-        if (detailed_results && t == settings.endTime)
+        if (detailed_results&&false)
 		//if(true)
         {
             DEBUG_PRINT(
                 "Current result overview:\n"
                 << "Velocity u:\n"
                 << discretization->u()
-                << "Velocity v:\n"
-                << discretization->v()
+                //<< "Velocity v:\n"
+                //<< discretization->v()
                 << "Pressure p:\n"
                 << discretization->p()
                 << "F:\n"
                 << discretization->F()
-                << "G:\n"
-                << discretization->G()
+                //<< "G:\n"
+                //<< discretization->G()
                 << "RHS:\n"
-                << discretization->RHS());
+                << discretization->RHS()
+                );
         }
     }
     RELEASE_PRINT('\n'); //< stop overwriting of time status line

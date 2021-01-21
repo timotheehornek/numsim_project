@@ -26,7 +26,7 @@ Pressure_solver::Pressure_solver(double eps, double max_it, const std::array<boo
 				//! compute local result of laplace operator
 				p_xx = (discr.p(i - 1, j) - 2 * discr.p(i, j) + discr.p(i + 1, j)) / std::pow(discr.dx(), 2);
 				p_yy = (discr.p(i, j - 1) - 2 * discr.p(i, j) + discr.p(i, j + 1)) / std::pow(discr.dy(), 2);
-	
+				
 				//! add squared local residual to result
 				residual += std::pow(discr.RHS(i,j) - (p_xx + p_yy), 2);
 			}
@@ -49,14 +49,15 @@ void Pressure_solver::solver(Discretization& discr) const
 	//! initialize iterations
 	double res{ residual(discr) };
 	int it_counter{ 0 };
-	while (res > m_eps && it_counter < m_max_it)
+	do
 	{
 		run_it_step(discr);
 		res = residual(discr);
 		++it_counter;
-	}
-	
-	
+	} while (res > m_eps && it_counter < m_max_it);
+
+	if (it_counter == m_max_it)
+		std::cout << "max_it reached\n";
 	DEBUG_PRINT
 	(
 		"Pressure solver terminated:\n"

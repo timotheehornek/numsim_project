@@ -27,6 +27,8 @@ private:
 protected:
 	Staggered_grid m_u;
 	Staggered_grid m_v;
+	Staggered_grid m_u_old;
+	Staggered_grid m_v_old;
 	Staggered_grid m_p;
 	Staggered_grid m_F;
 	Staggered_grid m_G;
@@ -91,7 +93,10 @@ public:
 	void compute_bound_val_obstacle();
 
 	//! compute and update boundary values of F and G
-	void compute_bound_val_FG();
+	void setup_bound_val_FG();
+
+	//! compute and update boundary values of F and G
+	void update_bound_val_FG();
 
 	// compute and update F and G
 	void compute_FG();
