@@ -81,6 +81,8 @@ void Settings::loadFromFile(const std::string &filename)
 					g[0] = std::stod(parameter_value_string);
 				else if (parameter_name == "gY")
 					g[1] = std::stod(parameter_value_string);
+				else if (parameter_name == "navierStokes")
+					navierStokes = extract_bool(parameter_value_string);
 				else if (parameter_name == "useDonorCell")
 					useDonorCell = extract_bool(parameter_value_string);
 				else if (parameter_name == "alpha")

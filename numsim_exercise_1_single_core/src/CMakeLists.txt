@@ -19,6 +19,9 @@ add_executable(${PROJECT_NAME}
    pressure_solver/pressure_solver.cpp
 #   pressure_solver/gauss_seidel.cpp
    pressure_solver/SOR.cpp
+   lattice_boltzmann/lattice_boltzmann.cpp
+   output_writer/output_writer_paraview_lbm.cpp
+   output_writer/output_writer_lbm.cpp
 )
 
 # Add the project directory to include directories, to be able to include all project header files from anywhere

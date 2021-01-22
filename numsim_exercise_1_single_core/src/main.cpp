@@ -21,8 +21,25 @@ int main(int argc, char *argv[])
     //! setup for execution time measurment
     auto start = std::chrono::high_resolution_clock::now();
 
-    //! algorithm setup
+    //! run simulation (Navier-Stokes or Lattice-Boltzmann)
+    if(settings.navierStokes)
+        run_ns(settings, detailed_results);
+    else
+        run_lbm(settings, detailed_results);
 
+
+
+    RELEASE_PRINT('\n'); //< stop overwriting of time status line
+    //! end time measurment and output execution time
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish - start;
+    std::cout << "Elapsed execution time: " << elapsed.count() << " s\n";
+
+    return EXIT_SUCCESS;
+}
+void run_ns(Settings settings, const bool detailed_results)
+{
+        //! algorithm setup
     //! initialize discretization
     std::shared_ptr<Discretization> discretization;
     if (settings.useDonorCell)
@@ -41,25 +58,8 @@ int main(int argc, char *argv[])
     int output_counter{0}; //< counter to keep track of output times
 
     //! initialize pressure solver
-    /*
-    std::array<bool, 4> p_0_boundary{
-        settings.useDirichletBc[0] == false || settings.bcBottom[1] != 0,
-        settings.useDirichletBc[1] == false || settings.bcTop[1] != 0,
-        settings.useDirichletBc[2] == false || settings.bcLeft[0] != 0,
-        settings.useDirichletBc[3] == false || settings.bcRight[0] != 0,
-    }; //< set pressure boundary conditions (p=0 if true; Neumann otherwise)
-    */
 
     std::shared_ptr<Pressure_solver> pressure_solver;
-    /*
-    if (settings.pressureSolver == "GaussSeidel")
-        pressure_solver = std::make_shared<Gauss_seidel>(
-            discretization->dx(), discretization->dy(),
-            settings.epsilon, settings.maximumNumberOfIterations);
-    else
-        pressure_solver = std::make_shared<SOR>(
-            discretization->dx(), discretization->dy(),
-            settings.epsilon, settings.maximumNumberOfIterations, settings.omega);*/
     pressure_solver = std::make_shared<SOR>(
         settings.epsilon, settings.maximumNumberOfIterations, settings.omega);
 
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
         
 
         //! print variables
-        if (detailed_results && false)
+        if (detailed_results && t == settings.endTime)
         //if(true)
         {
             DEBUG_PRINT(
@@ -152,12 +152,115 @@ int main(int argc, char *argv[])
                 << discretization->RHS());
         }
     }
-    RELEASE_PRINT('\n'); //< stop overwriting of time status line
+   
+}
 
-    //! end time measurment and output execution time
-    auto finish = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = finish - start;
-    std::cout << "Elapsed execution time: " << elapsed.count() << " s\n";
+void run_lbm(Settings settings, const bool detailed_results)
+{
+    //! algorithm setup
+   //! initialize lattice_boltzmann
+   Lattice_boltzmann lattice_boltzmann{
+           settings.nCells, settings.physicalSize,
+           settings.re, settings.g};
 
-    return EXIT_SUCCESS;
+  //! setup ouput writer
+  std::array<double, 2> meshWidth = { lattice_boltzmann.dx(), lattice_boltzmann.dy() };
+  OutputWriterParaviewLBM OWP{ lattice_boltzmann, meshWidth, settings.nCells };
+
+  // declare f_even and f_odd
+  std::array<int, 2> size { settings.nCells[0] , settings.nCells[1] };
+
+  std::array<Array2D, 9> f_even{ size, size, size, size, size, size, size, size, size };
+  std::array<Array2D, 9> f_odd{ size, size, size, size, size, size, size, size, size };
+
+  //initialize f_even
+  lattice_boltzmann.initialize_f(1.0, f_even);
+
+  // set the obstacle
+  if(settings.obstExist)
+  {
+    lattice_boltzmann.set_obstacle_rect(settings.obstaclePos);
+    //lattice_boltzmann.set_obstacle_round({ settings.nCells[0] / 4 , settings.nCells[1] / 2}, settings.nCells[1] / 8);
+  }
+  
+  //! simulation time setup
+  double t{ 0.0 };
+
+  //! set file counter
+  int output_counter { 1 };
+
+  // initialize turn variable
+  int turn = 1;
+
+  //compute viscosity
+  double viscosity = lattice_boltzmann.compute_viscosity(settings.physicalSize[1], settings.useDirichletBc,
+     settings.bcBottom, settings.bcTop, settings.bcLeft, settings.bcRight);
+  //set relaxation parameter
+  lattice_boltzmann.set_tau(viscosity);
+
+  //! time step calculation
+  lattice_boltzmann.set_dt();    //< set timestep
+
+  while (t < settings.endTime) // <= iterate through time span
+    {
+      //< alternatively set timestep manually
+      if ((t + lattice_boltzmann.dt()) > settings.endTime)       //< handle last time step
+        lattice_boltzmann.set_dt(settings.endTime - t);
+
+      t += 1.0 *lattice_boltzmann.dt();   // 0.01 needs 900s for vortex street                            //< update current time t
+
+      //! inform user about current time step
+      DEBUG_PRINT
+      (
+        "=========================================================================================\n"
+         << "Currently computing time: " << t << "\t\tEnd time: " << settings.endTime << '\n'
+         << "Time step has been set to: dt = " << lattice_boltzmann.dt()
+      );
+      RELEASE_PRINT
+      (
+        "Simulation time: " << std::fixed << std::setprecision(4) << t << " / " << settings.endTime << '\r'
+      );
+
+      //Two lattice implementation
+      if(turn) //input = f_even and output = f_odd
+      {
+        //do collide - stream for all boundary nodes
+        lattice_boltzmann.boundary_treatment(f_even, f_odd, settings.useDirichletBc,
+           settings.bcBottom, settings.bcTop, settings.bcLeft, settings.bcRight);
+
+        //do collide - stream all inner nodes
+        lattice_boltzmann.two_lattice(f_even, f_odd);
+
+        turn = 0;
+      }
+      else //input = f_odd and output = f_even
+      {
+        //do collide - stream for all boundary nodes
+        lattice_boltzmann.boundary_treatment(f_odd, f_even, settings.useDirichletBc,
+           settings.bcBottom, settings.bcTop, settings.bcLeft, settings.bcRight);
+
+        //do collide - stream all inner nodes
+        lattice_boltzmann.two_lattice(f_odd, f_even);
+
+       turn = 1;
+      }
+
+      //! write one output file every second
+      if (output_counter == static_cast<int>(t))
+      {
+        ++output_counter;
+        OWP.writeFile(t, lattice_boltzmann);
+      }
+
+      //! print variables
+      if (detailed_results && t == settings.endTime)
+      {
+          DEBUG_PRINT(
+            "Current result overview:\n"
+             << "Velocity u:\n" << lattice_boltzmann.u()
+             << "Velocity v:\n" << lattice_boltzmann.v()
+             << "Pressure p:\n" << lattice_boltzmann.p()
+          );
+      }
+   }
 }

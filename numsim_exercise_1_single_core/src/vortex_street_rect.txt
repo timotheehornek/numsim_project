@@ -1,11 +1,11 @@
 # Settings file for numsim program
-# Run ./numsim lid_driven_cavity.txt
+# Run ./numsim vortex_street_rect.txt
 
 # Problem description
-physicalSizeX = 2.0   # physical size of the domain
-physicalSizeY = 2.0
-endTime = 10.0        # duration of the simulation
-re = 1000             # Reynolds number
+physicalSizeX = 4.0   # physical size of the domain
+physicalSizeY = 1.0
+endTime = 30.0        # duration of the simulation
+re = 350              # Reynolds number
 gX = 0.0              # external forces, set to (gX,gY) = (0,-9.81) to account for gravity
 gY = 0.0
 
@@ -19,28 +19,28 @@ navierStokes = true
 #   => can be used for: OUTFLOW velocities + Dirichlet pressure
 useDirichletBcBottom = true
 useDirichletBcTop    = true
-useDirichletBcLeft   = true
-useDirichletBcRight  = true
+useDirichletBcLeft   = false
+useDirichletBcRight  = false
 # Dirichlet boundary condition values (only relevant ones will be used)
 bcBottomX = 0         # Dirichlet velocity
 bcBottomY = 0         # Dirichlet velocity/pressure
-bcTopX    = 1         # Dirichlet velocity
+bcTopX    = 0         # Dirichlet velocity
 bcTopY    = 0         # Dirichlet velocity/pressure
-bcLeftX   = 0         # Dirichlet velocity/pressure
+bcLeftX   = 1         # Dirichlet velocity/pressure
 bcLeftY   = 0         # Dirichlet velocity
 bcRightX  = 0         # Dirichlet velocity/pressure
 bcRightY  = 0         # Dirichlet velocity
 
 # Rectangular obstacle declaration (w.r.t. nCellsX and nCellsY; see discretization parameters)
-obstExist = false     # existence of obstacle
-obstLoLeX = 0         # lower left x coordinate of obstacle
-obstLoLeY = 0         # lower left y coordinate of obstacle
-obstUpRiX = 0         # upper right x coordinate of obstacle
-obstUpRiY = 0         # upper right y coordinate of obstacle
+obstExist = true      # existence of obstacle
+obstLoLeX = 35        # lower left x coordinate of obstacle
+obstLoLeY = 15        # lower left y coordinate of obstacle
+obstUpRiX = 45        # upper right x coordinate of obstacle
+obstUpRiY = 25        # upper right y coordinate of obstacle
 
 # Discretization parameters
-nCellsX = 20          # number of cells in x and y direction
-nCellsY = 20
+nCellsX = 160#640         # number of cells in x and y direction
+nCellsY = 41#160
 useDonorCell = true   # if donor cell discretization should be used, possible values: true false
 alpha = 0.5           # factor for donor-cell scheme, 0 is equivalent to central differences
 tau = 0.5             # safety factor for time step width
@@ -50,4 +50,4 @@ maximumDt = 0.1       # maximum values for time step width
 pressureSolver = SOR  # which pressure solver to use, possible values: GaussSeidel SOR CG
 omega = 1.6           # overrelaxation factor, only for SOR solver
 epsilon = 1e-5        # tolerance for 2-norm of residual
-maximumNumberOfIterations = 1e4    # maximum number of iterations in the solver
+maximumNumberOfIterations = 2e4    # maximum number of iterations in the solver

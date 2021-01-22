@@ -18,6 +18,8 @@
 #include "settings_parser/settings.h"
 #include "pressure_solver/SOR.h"
 #include "discretization/staggered_grid.h"
+#include "lattice_boltzmann/lattice_boltzmann.h"
+#include "output_writer/output_writer_paraview_lbm.h"
 
 #include <algorithm>
 #include <array>
@@ -27,3 +29,6 @@
 #include <iostream>
 #include <iomanip>
 #include <memory>
+
+void run_lbm(Settings settings, const bool detailed_results);
+void run_ns(Settings settings, const bool detailed_results);

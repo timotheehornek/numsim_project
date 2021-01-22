@@ -7,6 +7,8 @@
  */
 struct Settings
 {
+	bool navierStokes;					//< run Navier-Stokes or Lattice-Boltzmann simulation
+
 	std::array<int, 2> nCells;			//< number of cells in x and y direction
 	std::array<double, 2> physicalSize; //< physical size of the domain
 	double re = 1000;					//< reynolds number
