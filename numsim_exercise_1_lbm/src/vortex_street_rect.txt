@@ -2,36 +2,36 @@
 # Run ./numsim vortex_street_rect.txt
 
 # Problem description
-physicalSizeX = 8.0   # physical size of the domain
-physicalSizeY = 2.0
-endTime = 500.0        # duration of the simulation
-re = 650            # Reynolds number
+physicalSizeX = 64.0   # physical size of the domain
+physicalSizeY = 16.0
+endTime = 1500.0        # duration of the simulation
+re = 350            # Reynolds number
 gX = 0.0              # external forces, set to (gX,gY) = (0,-9.81) to account for gravity
 gY = 0.0
 
 # Boundary conditions
 useDirichletBcBottom = true
 useDirichletBcTop    = true
-useDirichletBcLeft   = true
+useDirichletBcLeft   = false
 useDirichletBcRight  = false
 bcBottomX = 0
 bcBottomY = 0
 bcTopX    = 0
 bcTopY    = 0
-bcLeftX   = 0.10626
+bcLeftX   = 0.00002
 bcLeftY   = 0
 bcRightX  = 0
 bcRightY  = 0
 
 # obstacle declaration (w.r.t. nCellsX and nCellsY; see discretization parameters)
-obstLoLeX = 120
-obstLoLeY = 60
-obstUpRiX = 160
-obstUpRiY = 100
+obstLoLeX = 70
+obstLoLeY = 30
+obstUpRiX = 90
+obstUpRiY = 50
 
 # Discretization parameters
-nCellsX = 640          # number of cells in x and y direction
-nCellsY = 160
+nCellsX = 320          # number of cells in x and y direction
+nCellsY = 80
 useDonorCell = true   # if donor cell discretization should be used, possible values: true false
 alpha = 0.5           # factor for donor-cell scheme, 0 is equivalent to central differences
 tau = 0.5             # safety factor for time step width

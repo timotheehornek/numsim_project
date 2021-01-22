@@ -49,10 +49,8 @@ void Lattice_boltzmann::set_dt()
 }
 
 //! compute the relaxtion parameter tau
-void Lattice_boltzmann::set_tau(double length, double max_vel)
+void Lattice_boltzmann::set_tau(double viscosity)
 {
-	//compute viscosity from reynolds number
-	double viscosity = max_vel * length / m_re;
 	//compute tau
 	double tau = 0.5 + 3.0 * viscosity / m_dx;
 	//set one over tau
@@ -70,6 +68,48 @@ void Lattice_boltzmann::set_tau_manually(double tau)
 	m_one_over_tau = 1.0/ tau;
 
 	assert(m_one_over_tau < 2);
+}
+
+//! compute the viscosity of the fluid - relevant for setting tau
+double Lattice_boltzmann::compute_viscosity(double length, const std::array<bool, 4>& useDirichletBc,
+		const std::array<double, 2>& bcBottom, const std::array<double, 2>& bcTop,
+		const std::array<double, 2>& bcLeft, const std::array<double, 2>& bcRight)
+{
+	double viscosity = 0;
+
+	//first check wheater pressure inflow is used
+	// -> use pressure gradient to determine viscosity
+	if(!useDirichletBc[0] && !useDirichletBc[1] && std::abs(bcBottom[1] - bcTop[1]) > 0) // bottom(0) and top(1)
+	{
+		viscosity = std::sqrt(length * length * length * std::abs(bcBottom[1] - bcTop[1]) / (8 * m_re));
+	}
+	else if (!useDirichletBc[2] && !useDirichletBc[3] && std::abs(bcLeft[0] - bcRight[0]) > 0) // left(2) and right(3)
+	{
+		viscosity = std::sqrt(length * length * length * std::abs(bcLeft[0] - bcRight[0]) / (8 * m_re));
+	}
+
+	//as there are only velocity inflow or no-slip boundaries use
+	// the maximal velocity to compute the viscosity
+	else
+	{
+		//compute maximal velocity on boundary
+		double max_vel = get_max_vel(useDirichletBc, bcBottom, bcTop, bcLeft, bcRight);
+		//check if maximal velocity is creater than 0
+		if (max_vel > 0)
+		{
+			viscosity =  max_vel * length / m_re;
+		}
+		// else set viscosity such that relaxation parameter tau = 1;
+		else
+		{
+			std::cout << "viscosity could no be computed -> tau set to 1" << '\n';
+			viscosity = m_dx / 6.0;
+		}
+	}
+
+	//print viscosity
+	std::cout << "viscosity = " << viscosity << '\n';
+	return viscosity;
 }
 
 //! set m_obstacle to match a rectangular object
@@ -157,7 +197,7 @@ double Lattice_boltzmann::get_max_vel(const std::array<bool, 4>& useDirichletBc,
 			max_vel = std::abs(bcRight[1]);
 		}
 	}
-	std::cout << "max_vel = " << max_vel << '\n';
+
 	return max_vel;
 }
 
@@ -419,10 +459,6 @@ void Lattice_boltzmann::boundary_treatment(
 	//std::array<bool, 4> useDirichletBc; //< {bottom, top, left, right}
 	//< type of boundary condition true for Dirichlet and false for Neumann
 
-	//define pressure for outflow boundaries
-	double p_in = 1.0;//1.01; //left or bottom pressure inflow boundary
-	double p_out = 1.0;
-
   //get loop size
   int size_x = input[0].size()[0];
   int size_y = input[0].size()[1];
@@ -443,16 +479,34 @@ void Lattice_boltzmann::boundary_treatment(
 	//compute buried link
 	f_buried = 1.0 / 18.0 * (input[1](i, j) + input[2](i, j) + input[3](i, j) + input[4](i, j) + input[5](i, j) + input[7](i, j));
 
-	if (!useDirichletBc[3] || !useDirichletBc[1])
+	if (!useDirichletBc[3])
 	{//outflow boundary set values according to set density
-		density = p_out;// * 3 / m_lattice_factor;
+		//initialize as outflow
+		double density = 1.0;
+		//check if inflow - assume full pressure gradient is applied to inflow
+		if (bcRight[0] > bcLeft[0])
+		{
+			density += 3 * (bcRight[0] - bcLeft[0]) / m_lattice_factor * size_x;
+		}
+
+		f_buried = density / 18.0 - f_buried;
+	}
+	else if (!useDirichletBc[1])
+	{//outflow boundary set values according to set density
+		//initialize as outflow
+		double density = 1.0;
+		//check if inflow - assume full pressure gradient is applied to inflow
+		if (bcTop[1] > bcBottom[1])
+		{
+			density += 3 * (bcTop[1] - bcBottom[1]) / m_lattice_factor * size_y;
+		}
 
 		f_buried = density / 18.0 - f_buried;
 	}
 
 	input[6](i, j) = f_buried;
 	input[8](i, j) = f_buried;
-	input[0](i,j)= 16.0 * f_buried;
+	input[0](i, j)= 16.0 * f_buried;
 
 	//normal collide step
 	collide(i, j, compute_rho(i,j, input), compute_u(i,j, input), compute_v(i,j, input), input);
@@ -479,13 +533,25 @@ void Lattice_boltzmann::boundary_treatment(
 
 	if (!useDirichletBc[2])
 	{//outflow boundary set values according to set density
-	  density = p_in;// * 3 / m_lattice_factor;
+		//initialize as outflow
+		double density = 1.0;
+		//check if inflow - assume full pressure gradient is applied to inflow
+		if (bcLeft[0] > bcRight[0])
+		{
+			density += 3 * (bcLeft[0] - bcRight[0]) / m_lattice_factor * size_x;
+		}
 
 	  f_buried = density / 18.0 - f_buried;
 	}
 	else if (!useDirichletBc[1])
 	{//outflow boundary set values according to set density
-		density = p_out;// * 3 / m_lattice_factor;
+		//initialize as outflow
+		double density = 1.0;
+		//check if inflow - assume full pressure gradient is applied to inflow
+		if (bcTop[1] > bcBottom[1])
+		{
+			density += 3 * (bcTop[1] - bcBottom[1]) / m_lattice_factor * size_y;
+		}
 
 		f_buried = density / 18.0 - f_buried;
 	}
@@ -516,9 +582,28 @@ void Lattice_boltzmann::boundary_treatment(
 	//compute buried link
 	f_buried = 1.0 / 18.0 * (input[1](i, j) + input[2](i, j) + input[3](i, j) + input[4](i, j) + input[5](i, j) + input[7](i, j));
 
-	if (!useDirichletBc[2] || !useDirichletBc[0])
+	if (!useDirichletBc[2])
 	{//outflow boundary set values according to set density
-		density = p_in;// * 3 / m_lattice_factor;
+		//initialize as outflow
+		double density = 1.0;
+		//check if inflow - assume full pressure gradient is applied to inflow
+		if (bcLeft[0] > bcRight[0])
+		{
+			density += 3 * (bcLeft[0] - bcRight[0]) / m_lattice_factor * size_x;
+		}
+
+	  f_buried = density / 18.0 - f_buried;
+	}
+	else if (!useDirichletBc[0])
+	{//outflow boundary set values according to set density
+		//initialize as outflow
+		double density = 1.0;
+		//check if inflow - assume full pressure gradient is applied to inflow
+		if (bcBottom[1] > bcTop[1])
+		{
+			density += 3 * (bcBottom[1] - bcTop[1]) / m_lattice_factor * size_y;
+		}
+
 
 		f_buried = density / 18.0 - f_buried;
 	}
@@ -552,13 +637,25 @@ void Lattice_boltzmann::boundary_treatment(
 
 	if (!useDirichletBc[3])
 	{//outflow boundary set values according to set density
-		density = p_out;// * 3 / m_lattice_factor;
+		//initialize as outflow
+		double density = 1.0;
+		//check if inflow - assume full pressure gradient is applied to inflow
+		if (bcRight[0] > bcLeft[0])
+		{
+			density += 3 * (bcRight[0] - bcLeft[0]) / m_lattice_factor * size_x;
+		}
 
 		f_buried = density / 18.0 - f_buried;
 	}
 	else if (!useDirichletBc[0])
 	{//outflow boundary set values according to set density
-		density = p_in;// * 3 / m_lattice_factor;
+		//initialize as outflow
+		double density = 1.0;
+		//check if inflow - assume full pressure gradient is applied to inflow
+		if (bcBottom[1] > bcTop[1])
+		{
+			density += 3 * (bcBottom[1] - bcTop[1]) / m_lattice_factor * size_y;
+		}
 
 		f_buried = density / 18.0 - f_buried;
 	}
@@ -593,14 +690,19 @@ void Lattice_boltzmann::boundary_treatment(
 		//compute missing values
 		if (!useDirichletBc[3])
 		{//Neumann -- outflow boundary
-			double density = p_out;// * 3 / m_lattice_factor;
-			//compute velocity from pressure on boundary
+			//initialize as outflow
+			double density = 1.0;
+			//check if inflow - assume full pressure gradient is applied to inflow
+			if (bcRight[0] > bcLeft[0])
+			{
+				density += 3 * (bcRight[0] - bcLeft[0]) / m_lattice_factor * size_x;
+			}
 			vel_u_right = (input[0](i, j) + input[2](i, j) + input[4](i, j) + 2 * (input[1](i, j) + input[5](i, j) + input[8](i, j))) - density;
 			vel_v_right = 0;
 		}
 		else
 		{//Dirichlet -- inflow or no-slip boundary
-			vel_u_right = bcRight[0];// * 4.0 * j * (size_y - 1 - j) / (size_y - 1 * size_y - 1); //velocity profile doesnt work xD
+			vel_u_right = bcRight[0];
 			vel_v_right = bcRight[1];
 		}
 
@@ -641,15 +743,22 @@ void Lattice_boltzmann::boundary_treatment(
 
 		//compute missing values
 		if (!useDirichletBc[2])
-		{//Neumann -- outflow boundary
-			double density = p_in;// * 3 / m_lattice_factor;
+		{//Neumann -- inflow or outflow boundary
+			//initialize as outflow
+			double density = 1.0;
+			//check if inflow - assume full pressure gradient is applied to inflow
+			if (bcLeft[0] > bcRight[0])
+			{
+				density += 3 * (bcLeft[0] - bcRight[0]) / m_lattice_factor * size_x;
+			}
+
 			//compute velocity from pressure on boundary
 			vel_u_left = density - (input[0](i, j) + input[2](i, j) + input[4](i, j) + 2 * (input[3](i, j) + input[6](i, j) + input[7](i, j)));
 			vel_v_left = 0;
 		}
 		else
 		{//Dirichlet -- inflow or no-slip boundary
-			vel_u_left = bcLeft[0];// * 4.0 * j * (size_y - 1 - j) / (size_y - 1 * size_y - 1); //velocity profile doesnt work xD
+			vel_u_left = bcLeft[0];
 			vel_v_left = bcLeft[1];
 		}
 
@@ -691,7 +800,14 @@ void Lattice_boltzmann::boundary_treatment(
 		//compute missing values
 		if (!useDirichletBc[1])
 		{//Neumann -- outflow boundary
-			double density = p_out;// * 3 / m_lattice_factor;
+			//initialize as outflow
+			double density = 1.0;
+			//check if inflow - assume full pressure gradient is applied to inflow
+			if (bcTop[1] > bcBottom[1])
+			{
+				density += 3 * (bcTop[1] - bcBottom[1]) / m_lattice_factor * size_y;
+			}
+
 			//compute velocity from pressure on boundary
 			vel_u_top = 0;
 			vel_v_top = (input[0](i, j) + input[1](i, j) + input[3](i, j) + 2 * (input[2](i, j) + input[5](i, j) + input[6](i, j))) - density;
@@ -740,7 +856,14 @@ void Lattice_boltzmann::boundary_treatment(
 		//compute missing values
 		if (!useDirichletBc[0])
 		{//outflow boundary
-			double density = p_in;// * 3 / m_lattice_factor;
+			//initialize as outflow
+			double density = 1.0;
+			//check if inflow - assume full pressure gradient is applied to inflow
+			if (bcBottom[1] > bcTop[1])
+			{
+				density += 3 * (bcBottom[1] - bcTop[1]) / m_lattice_factor * size_y;
+			}
+
 			//compute velocity from pressure on boundary
 			vel_u_bottom = 0;
 			vel_v_bottom = density - (input[0](i, j) + input[1](i, j) + input[3](i, j) + 2 * (input[4](i, j) + input[7](i, j) + input[8](i, j)));

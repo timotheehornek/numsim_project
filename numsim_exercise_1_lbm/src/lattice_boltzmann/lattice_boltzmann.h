@@ -58,10 +58,15 @@ public:
   void set_dt();
 
   //! set tau according to physical size and reynolds number
-  void set_tau(double length, double max_vel);
+  void set_tau(double viscosity);
 
   //! set tau manually without the lattice factor
   void set_tau_manually(double tau);
+
+ //! compute the viscosity of the fluid - relevant for setting tau
+  double compute_viscosity(double length, const std::array<bool, 4>& useDirichletBc,
+  		const std::array<double, 2>& bcBottom, const std::array<double, 2>& bcTop,
+  		const std::array<double, 2>& bcLeft, const std::array<double, 2>& bcRight);
 
   //! set m_obstacle
   void set_obstacle_rect(const std::array<int, 4>& obstaclePos);

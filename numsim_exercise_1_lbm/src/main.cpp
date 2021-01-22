@@ -43,9 +43,12 @@ int main(int argc, char* argv[])
   lattice_boltzmann.initialize_f(1.0, f_even);
 
   // set the obstacle
-  lattice_boltzmann.set_obstacle_rect(settings.obstaclePos);
-  //lattice_boltzmann.set_obstacle_round({ settings.nCells[0] / 4 , settings.nCells[1] / 2}, settings.nCells[1] / 8);
-
+  if(true)
+  {
+    lattice_boltzmann.set_obstacle_rect(settings.obstaclePos);
+    //lattice_boltzmann.set_obstacle_round({ settings.nCells[0] / 4 , settings.nCells[1] / 2}, settings.nCells[1] / 8);
+  }
+  
   //! simulation time setup
   double t{ 0.0 };
 
@@ -55,23 +58,22 @@ int main(int argc, char* argv[])
   // initialize turn variable
   int turn = 1;
 
-  //compute max set velocity
-  double max_vel = lattice_boltzmann.get_max_vel(settings.useDirichletBc,
+  //compute viscosity
+  double viscosity = lattice_boltzmann.compute_viscosity(settings.physicalSize[1], settings.useDirichletBc,
      settings.bcBottom, settings.bcTop, settings.bcLeft, settings.bcRight);
-
   //set relaxation parameter
-  lattice_boltzmann.set_tau(settings.physicalSize[1], max_vel);
+  lattice_boltzmann.set_tau(viscosity);
 
   //! time step calculation
   lattice_boltzmann.set_dt();    //< set timestep
 
   while (t < settings.endTime) // <= iterate through time span
     {
-                                       //< alternatively set timestep manually
+      //< alternatively set timestep manually
       if ((t + lattice_boltzmann.dt()) > settings.endTime)       //< handle last time step
         lattice_boltzmann.set_dt(settings.endTime - t);
 
-      t += lattice_boltzmann.dt();                               //< update current time t
+      t += 1.0 *lattice_boltzmann.dt();   // 0.01 needs 900s for vortex street                            //< update current time t
 
       //! inform user about current time step
       DEBUG_PRINT
@@ -82,7 +84,7 @@ int main(int argc, char* argv[])
       );
       RELEASE_PRINT
       (
-        "Simulation time: " << std::fixed << std::setprecision(2) << t << " / " << settings.endTime << '\r'
+        "Simulation time: " << std::fixed << std::setprecision(4) << t << " / " << settings.endTime << '\r'
       );
 
       //Two lattice implementation
