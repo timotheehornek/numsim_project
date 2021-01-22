@@ -1,6 +1,6 @@
 #include "discretization.h"
 
-Discretization::Discretization(const std::array<int, 2> &nCells, const std::array<double, 2> &physicalSize, const std::array<int, 4> &obstacle_pos, const double re, const std::array<double, 2> &g)
+Discretization::Discretization(const std::array<int, 2> &nCells, const std::array<double, 2> &physicalSize, const bool obstExist, const std::array<int, 4> &obstacle_pos, const double re, const std::array<double, 2> &g)
 	: m_nCells{nCells},
 	  m_u{nCells[0] + 1, nCells[1] + 2},
 	  m_v{nCells[0] + 2, nCells[1] + 1},
@@ -12,11 +12,11 @@ Discretization::Discretization(const std::array<int, 2> &nCells, const std::arra
 	  m_RHS{nCells[0] + 2, nCells[1] + 2},
 	  m_dx{physicalSize[0] / nCells[0]},
 	  m_dy{physicalSize[1] / nCells[1]},
+	  m_obstExist{obstExist},
 	  m_obstacle_pos{obstacle_pos},
 	  m_re{re},
 	  m_g{g}
-{
-}
+{}
 
 // compute dt from stability conditions
 void Discretization::set_dt(double dt_max, double sec_factor)
@@ -105,6 +105,10 @@ double &Discretization::p_ref(int i, int j)
 const std::array<int, 2> &Discretization::nCells() const
 {
 	return m_nCells;
+}
+const bool Discretization::obstacle_exist() const
+{
+	return m_obstExist;
 }
 const int Discretization::obstacle_pos(int i) const
 {
@@ -278,6 +282,9 @@ void Discretization::update_bound_val_uv(
 bool Discretization::is_in_obstacle(int i, int j, int var)
 {
 	assert(0 <= var && var < 4);
+	if(!m_obstExist)
+		return false;
+	
 	switch (var)
 	{
 	case VAR_U:

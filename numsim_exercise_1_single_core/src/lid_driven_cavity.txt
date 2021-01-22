@@ -10,24 +10,30 @@ gX = 0.0              # external forces, set to (gX,gY) = (0,-9.81) to account f
 gY = 0.0
 
 # Boundary conditions
+# true: Dirichlet for velocity, Neumann for pressure (zero gradient)
+#   => can be used for: NOSLIP, Dirichlet velocities (all + Neumann pressure)
+# false: Neumann for velocity (zero gradient), Dirichlet for pressure
+#   => can be used for: OUTFLOW velocities + Dirichlet pressure
 useDirichletBcBottom = true
 useDirichletBcTop    = true
 useDirichletBcLeft   = true
 useDirichletBcRight  = true
-bcBottomX = 0
-bcBottomY = 0
-bcTopX    = 1
-bcTopY    = 0
-bcLeftX   = 0
-bcLeftY   = 0
-bcRightX  = 0
-bcRightY  = 0
+# Dirichlet boundary condition values (only relevant ones will be used)
+bcBottomX = 0         # Dirichlet velocity
+bcBottomY = 0         # Dirichlet velocity/pressure
+bcTopX    = 1         # Dirichlet velocity
+bcTopY    = 0         # Dirichlet velocity/pressure
+bcLeftX   = 0         # Dirichlet velocity/pressure
+bcLeftY   = 0         # Dirichlet velocity
+bcRightX  = 0         # Dirichlet velocity/pressure
+bcRightY  = 0         # Dirichlet velocity
 
-# obstacle declaration (w.r.t. nCellsX and nCellsY; see discretization parameters)
-obstLoLeX = 5
-obstLoLeY = 12
-obstUpRiX = 11
-obstUpRiY = 18
+# Rectangular obstacle declaration (w.r.t. nCellsX and nCellsY; see discretization parameters)
+obstExist = false     # existence of obstacle
+obstLoLeX = 0         # lower left x coordinate of obstacle
+obstLoLeY = 0         # lower left y coordinate of obstacle
+obstUpRiX = 0         # upper right x coordinate of obstacle
+obstUpRiY = 0         # upper right y coordinate of obstacle
 
 # Discretization parameters
 nCellsX = 20          # number of cells in x and y direction
@@ -42,4 +48,3 @@ pressureSolver = SOR  # which pressure solver to use, possible values: GaussSeid
 omega = 1.6           # overrelaxation factor, only for SOR solver
 epsilon = 1e-5        # tolerance for 2-norm of residual
 maximumNumberOfIterations = 1e4    # maximum number of iterations in the solver
-

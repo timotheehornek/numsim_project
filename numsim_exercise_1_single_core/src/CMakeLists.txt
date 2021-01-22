@@ -49,12 +49,3 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 message("CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-
-#copy settings files to buid/src/
-file(COPY lid_driven_cavity.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY driven_cavity.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-#copy settings files to build/
-file(COPY lid_driven_cavity.txt DESTINATION ${PROJECT_SOURCE_DIR}/../build)
-file(COPY driven_cavity.txt DESTINATION ${PROJECT_SOURCE_DIR}/../build)
-file(COPY carman_vortex_street.txt DESTINATION ${PROJECT_SOURCE_DIR}/../build)

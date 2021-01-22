@@ -6,7 +6,7 @@ class Central_differences :
 	public Discretization
 {
 public:
-	Central_differences(const std::array<int, 2>& nCells, const std::array<double, 2>& physicalSize, const std::array<int, 4>& obstacle_pos, const double re, const std::array<double, 2>& g);
+	Central_differences(const std::array<int, 2>& nCells, const std::array<double, 2>& physicalSize, const bool obstExist, const std::array<int, 4>& obstacle_pos, const double re, const std::array<double, 2>& g);
 
 	//! compute the 1st derivative ∂ p / ∂x
 	double compute_dp_dx(int i, int j) const override;

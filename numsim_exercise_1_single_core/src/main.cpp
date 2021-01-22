@@ -27,11 +27,11 @@ int main(int argc, char *argv[])
     std::shared_ptr<Discretization> discretization;
     if (settings.useDonorCell)
         discretization = std::make_shared<Donor_cell>(
-            settings.nCells, settings.physicalSize, settings.obstaclePos,
+            settings.nCells, settings.physicalSize, settings.obstExist, settings.obstaclePos,
             settings.re, settings.g, settings.alpha);
     else
         discretization = std::make_shared<Central_differences>(
-            settings.nCells, settings.physicalSize, settings.obstaclePos,
+            settings.nCells, settings.physicalSize, settings.obstExist, settings.obstaclePos,
             settings.re, settings.g);
 
     //! setup ouput writer
@@ -119,7 +119,8 @@ int main(int argc, char *argv[])
         discretization->compute_uv();
 
         //! compute u and v around boundary
-        discretization->compute_bound_val_obstacle();
+        if(settings.obstExist)
+            discretization->compute_bound_val_obstacle();
 
         //! write results to output every 1/10 s
         if(output_counter==static_cast<int>(10*t))

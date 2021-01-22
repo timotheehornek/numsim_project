@@ -44,11 +44,12 @@ protected:
 
 	const std::array<int, 2> m_nCells;
 
+	const bool m_obstExist;
 	const std::array<int, 4>& m_obstacle_pos;
 
 public:
 	//! construct the object with given number of cells in x and y direction
-	Discretization(const std::array<int, 2> &nCells, const std::array<double, 2> &physicalSize, const std::array<int, 4>& obstacle_pos, const double re, const std::array<double, 2> &g);
+	Discretization(const std::array<int, 2> &nCells, const std::array<double, 2> &physicalSize, const bool obstExist, const std::array<int, 4> &obstacle_pos, const double re, const std::array<double, 2> &g);
 
 	//! set dt checking stability conditions
 	void set_dt(double dt_max, double sec_factor);
@@ -72,6 +73,7 @@ public:
 	
 	const std::array<int, 2> &nCells() const;
 	
+	const bool obstacle_exist() const;
 	const int obstacle_pos(int i) const;
 
 	//! sets up boundary using boundary conditions of u,v around domain

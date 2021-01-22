@@ -26,6 +26,7 @@ struct Settings
 	std::array<double, 2> bcLeft;		//< boundary values of u,v at left of domain
 	std::array<double, 2> bcRight;		//< boundary values of u,v at right of domain
 
+	bool obstExist;
 	std::array<int, 4> obstaclePos;  	//< obstacle position; lower left corner followed by upper right corner
 
 	std::string pressureSolver = "SOR";	 //< which pressure solver to use, "GaussSeidel" or "SOR"

@@ -93,6 +93,8 @@ void Settings::loadFromFile(const std::string &filename)
 					useDirichletBc[2] = extract_bool(parameter_value_string);
 				else if (parameter_name == "useDirichletBcRight")
 					useDirichletBc[3] = extract_bool(parameter_value_string);
+				else if (parameter_name =="obstExist")
+					obstExist = extract_bool(parameter_value_string);
 				else if (parameter_name == "bcBottomX")
 					bcBottom[0] = std::stod(parameter_value_string);
 				else if (parameter_name == "bcBottomY")
