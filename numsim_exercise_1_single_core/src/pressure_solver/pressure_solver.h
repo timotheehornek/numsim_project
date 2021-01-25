@@ -7,7 +7,7 @@
 #endif
 
 #include "array2d/array2d.h"
-#include "discretization/Discretization.h"
+#include "discretization/discretization.h"
 
 #include <array>
 #include <cmath>
