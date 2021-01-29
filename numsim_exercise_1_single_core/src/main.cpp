@@ -120,8 +120,9 @@ void run_ns(Settings settings, const bool detailed_results)
 
         //! compute u and v around boundary
         if(settings.obstExist)
-            discretization->compute_bound_val_obstacle();
-
+		{
+			discretization->compute_bound_val_obstacle();
+		}
         //! write results to output every 1/10 s
         if(output_counter==static_cast<int>(10*t))
         {
@@ -130,7 +131,6 @@ void run_ns(Settings settings, const bool detailed_results)
             //OWT.writeFile(t);
             ++output_counter;
         }
-        
 
         //! print variables
         if (detailed_results && t == settings.endTime)

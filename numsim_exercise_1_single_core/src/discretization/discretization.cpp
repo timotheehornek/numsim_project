@@ -384,9 +384,9 @@ void Discretization::compute_FG()
 	}
 
 	// compute G
-	for (int j{1}; j < m_v.y_max() - 1; ++j)
+	for (int j{1}; j < m_v.y_max()-1; ++j)
 	{
-		for (int i{1}; i < m_v.x_max() - 1; ++i)
+		for (int i{1}; i < m_v.x_max()-1; ++i)
 		{
 			if (!is_in_obstacle(i, j, VAR_V))												   //< check if outside obstacle
 				m_G(i, j) = m_v(i, j)														   //< v at i,j
