@@ -23,7 +23,7 @@ public:
 	OutputWriterParaviewLBM(Lattice_boltzmann lattice_boltzmann, std::array<double, 2> meshwidth, std::array<int, 2> nCells);
 
   //! write current velocities to file, filename is output_<count>.vti
-  void writeFile(double currentTime, Lattice_boltzmann lattice_boltzmann);
+  void writeFile(double currentTime, const Lattice_boltzmann &lattice_boltzmann);
 
 private:
 

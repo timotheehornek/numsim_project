@@ -32,7 +32,7 @@ Lattice_boltzmann::Lattice_boltzmann(const std::array<int, 2>& nCells, const std
 void Lattice_boltzmann::set_dt(double dt_max)
 {
 	//! set dt respecting user input for highest dt
-	m_dt = dt_max;
+	m_dt =  dt_max;
 
 	assert(m_dt > 0);
 }
@@ -42,8 +42,11 @@ void Lattice_boltzmann::set_dt()
 {
 	assert(m_dx == m_dy);
 
+	// determine time factor to produce nicer results
+	double time_factor = 0.01;
+
 	//set dt according to lattice factor
-	m_dt = m_dx * m_lattice_factor;
+	m_dt = time_factor * m_dx * m_lattice_factor;
 
 	assert(m_dt > 0);
 }
@@ -71,7 +74,7 @@ void Lattice_boltzmann::set_tau_manually(double tau)
 }
 
 //! compute the viscosity of the fluid - relevant for setting tau
-double Lattice_boltzmann::compute_viscosity(double length, const std::array<bool, 4>& useDirichletBc,
+double Lattice_boltzmann::compute_viscosity(const std::array<double, 2>& size, const std::array<bool, 4>& useDirichletBc,
 		const std::array<double, 2>& bcBottom, const std::array<double, 2>& bcTop,
 		const std::array<double, 2>& bcLeft, const std::array<double, 2>& bcRight)
 {
@@ -81,11 +84,11 @@ double Lattice_boltzmann::compute_viscosity(double length, const std::array<bool
 	// -> use pressure gradient to determine viscosity
 	if(!useDirichletBc[0] && !useDirichletBc[1] && std::abs(bcBottom[1] - bcTop[1]) > 0) // bottom(0) and top(1)
 	{
-		viscosity = std::sqrt(length * length * length * std::abs(bcBottom[1] - bcTop[1]) / (8 * m_re));
+		viscosity = std::sqrt(size[0] * size[0] * size[0] * std::abs(bcBottom[1] - bcTop[1]) / (8 * m_re * m_nCells[1]));
 	}
 	else if (!useDirichletBc[2] && !useDirichletBc[3] && std::abs(bcLeft[0] - bcRight[0]) > 0) // left(2) and right(3)
 	{
-		viscosity = std::sqrt(length * length * length * std::abs(bcLeft[0] - bcRight[0]) / (8 * m_re));
+		viscosity = std::sqrt(size[1] * size[1] * size[1] * std::abs(bcLeft[0] - bcRight[0]) / (8 * m_re * m_nCells[0]));
 	}
 
 	//as there are only velocity inflow or no-slip boundaries use
@@ -94,6 +97,18 @@ double Lattice_boltzmann::compute_viscosity(double length, const std::array<bool
 	{
 		//compute maximal velocity on boundary
 		double max_vel = get_max_vel(useDirichletBc, bcBottom, bcTop, bcLeft, bcRight);
+
+		//identifiy channel width
+		double length;
+		if( max_vel == bcBottom[0] || max_vel == bcBottom[1] || max_vel == bcTop[0] || max_vel == bcTop[1])
+		{
+			length = size[0];
+		}
+		else
+		{
+			length = size[1];
+		}
+
 		//check if maximal velocity is creater than 0
 		if (max_vel > 0)
 		{
@@ -459,6 +474,12 @@ void Lattice_boltzmann::boundary_treatment(
 	//std::array<bool, 4> useDirichletBc; //< {bottom, top, left, right}
 	//< type of boundary condition true for Dirichlet and false for Neumann
 
+	double magic_factor = 1.0;
+	//magic factor that is sadly different for each test case and leads to the correct inflow velocity for pressure boundaries
+	//the scientific relation behind the factor was not found as it should normally be 1.0 :(
+	//poiseulle.txt -> magic_factor = 4.96
+	//vortex_street_rect_lbm.txt -> magic_factor = 5.5 * 4.1
+
   //get loop size
   int size_x = input[0].size()[0];
   int size_y = input[0].size()[1];
@@ -486,7 +507,7 @@ void Lattice_boltzmann::boundary_treatment(
 		//check if inflow - assume full pressure gradient is applied to inflow
 		if (bcRight[0] > bcLeft[0])
 		{
-			density += 3 * (bcRight[0] - bcLeft[0]) / m_lattice_factor * size_x;
+			density += magic_factor * 3.0 * (bcRight[0] - bcLeft[0]) / (m_nCells[0] * m_lattice_factor);
 		}
 
 		f_buried = density / 18.0 - f_buried;
@@ -498,7 +519,7 @@ void Lattice_boltzmann::boundary_treatment(
 		//check if inflow - assume full pressure gradient is applied to inflow
 		if (bcTop[1] > bcBottom[1])
 		{
-			density += 3 * (bcTop[1] - bcBottom[1]) / m_lattice_factor * size_y;
+			density += magic_factor * 3.0 * (bcTop[1] - bcBottom[1]) / (m_nCells[1] * m_lattice_factor);
 		}
 
 		f_buried = density / 18.0 - f_buried;
@@ -538,7 +559,7 @@ void Lattice_boltzmann::boundary_treatment(
 		//check if inflow - assume full pressure gradient is applied to inflow
 		if (bcLeft[0] > bcRight[0])
 		{
-			density += 3 * (bcLeft[0] - bcRight[0]) / m_lattice_factor * size_x;
+			density += magic_factor * 3.0 * (bcLeft[0] - bcRight[0]) / (m_nCells[0] * m_lattice_factor);
 		}
 
 	  f_buried = density / 18.0 - f_buried;
@@ -550,7 +571,7 @@ void Lattice_boltzmann::boundary_treatment(
 		//check if inflow - assume full pressure gradient is applied to inflow
 		if (bcTop[1] > bcBottom[1])
 		{
-			density += 3 * (bcTop[1] - bcBottom[1]) / m_lattice_factor * size_y;
+			density += magic_factor * 3.0 * (bcTop[1] - bcBottom[1]) / (m_nCells[1] * m_lattice_factor);
 		}
 
 		f_buried = density / 18.0 - f_buried;
@@ -589,7 +610,7 @@ void Lattice_boltzmann::boundary_treatment(
 		//check if inflow - assume full pressure gradient is applied to inflow
 		if (bcLeft[0] > bcRight[0])
 		{
-			density += 3 * (bcLeft[0] - bcRight[0]) / m_lattice_factor * size_x;
+			density += magic_factor * 3.0 * (bcLeft[0] - bcRight[0]) / (m_nCells[0] * m_lattice_factor);
 		}
 
 	  f_buried = density / 18.0 - f_buried;
@@ -601,7 +622,7 @@ void Lattice_boltzmann::boundary_treatment(
 		//check if inflow - assume full pressure gradient is applied to inflow
 		if (bcBottom[1] > bcTop[1])
 		{
-			density += 3 * (bcBottom[1] - bcTop[1]) / m_lattice_factor * size_y;
+			density += magic_factor * 3.0 * (bcBottom[1] - bcTop[1]) / (m_nCells[1] * m_lattice_factor);
 		}
 
 
@@ -642,7 +663,7 @@ void Lattice_boltzmann::boundary_treatment(
 		//check if inflow - assume full pressure gradient is applied to inflow
 		if (bcRight[0] > bcLeft[0])
 		{
-			density += 3 * (bcRight[0] - bcLeft[0]) / m_lattice_factor * size_x;
+			density += magic_factor * 3.0 * (bcRight[0] - bcLeft[0]) / (m_nCells[0] * m_lattice_factor);
 		}
 
 		f_buried = density / 18.0 - f_buried;
@@ -654,7 +675,7 @@ void Lattice_boltzmann::boundary_treatment(
 		//check if inflow - assume full pressure gradient is applied to inflow
 		if (bcBottom[1] > bcTop[1])
 		{
-			density += 3 * (bcBottom[1] - bcTop[1]) / m_lattice_factor * size_y;
+			density += magic_factor * 3.0 * (bcBottom[1] - bcTop[1]) / (m_nCells[1] * m_lattice_factor);
 		}
 
 		f_buried = density / 18.0 - f_buried;
@@ -695,8 +716,9 @@ void Lattice_boltzmann::boundary_treatment(
 			//check if inflow - assume full pressure gradient is applied to inflow
 			if (bcRight[0] > bcLeft[0])
 			{
-				density += 3 * (bcRight[0] - bcLeft[0]) / m_lattice_factor * size_x;
+				density += magic_factor * 3.0 * (bcRight[0] - bcLeft[0]) / (m_nCells[0] * m_lattice_factor);
 			}
+
 			vel_u_right = (input[0](i, j) + input[2](i, j) + input[4](i, j) + 2 * (input[1](i, j) + input[5](i, j) + input[8](i, j))) - density;
 			vel_v_right = 0;
 		}
@@ -749,7 +771,7 @@ void Lattice_boltzmann::boundary_treatment(
 			//check if inflow - assume full pressure gradient is applied to inflow
 			if (bcLeft[0] > bcRight[0])
 			{
-				density += 3 * (bcLeft[0] - bcRight[0]) / m_lattice_factor * size_x;
+				density += magic_factor * 3.0 * (bcLeft[0] - bcRight[0]) / (m_nCells[0] * m_lattice_factor);
 			}
 
 			//compute velocity from pressure on boundary
@@ -774,7 +796,9 @@ void Lattice_boltzmann::boundary_treatment(
 
 		//normal collide step
 		collide(i, j, compute_rho(i,j, input), vel_u_left, vel_v_left, input);
+		/*
 
+		*/
 		//modified stream step -> send values into domain
 		//send input values to neighbor cells in output vector
 		output[0](i, j) = input[0](i, j);
@@ -805,7 +829,7 @@ void Lattice_boltzmann::boundary_treatment(
 			//check if inflow - assume full pressure gradient is applied to inflow
 			if (bcTop[1] > bcBottom[1])
 			{
-				density += 3 * (bcTop[1] - bcBottom[1]) / m_lattice_factor * size_y;
+				density += magic_factor * 3.0 * (bcTop[1] - bcBottom[1]) / (m_nCells[1] * m_lattice_factor);
 			}
 
 			//compute velocity from pressure on boundary
@@ -861,7 +885,7 @@ void Lattice_boltzmann::boundary_treatment(
 			//check if inflow - assume full pressure gradient is applied to inflow
 			if (bcBottom[1] > bcTop[1])
 			{
-				density += 3 * (bcBottom[1] - bcTop[1]) / m_lattice_factor * size_y;
+				density += magic_factor * 3.0 * (bcBottom[1] - bcTop[1]) / (m_nCells[1] * m_lattice_factor);
 			}
 
 			//compute velocity from pressure on boundary

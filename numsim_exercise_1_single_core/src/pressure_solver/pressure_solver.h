@@ -3,11 +3,11 @@
 #ifndef NDEBUG
 #define DEBUG_PRINT(x) do { std::cout << x << '\n'; } while (0)
 #else
-#define DEBUG_PRINT(x) 
+#define DEBUG_PRINT(x)
 #endif
 
 #include "array2d/array2d.h"
-#include "discretization/Discretization.h"
+#include "discretization/discretization.h"
 
 #include <array>
 #include <cmath>
@@ -28,17 +28,17 @@ protected:
 		LEFT,
 		RIGHT
 	};
-	
+
 	const double m_eps;
 	const double m_max_it;
-	
-	// compute residual 
+
+	// compute residual
 	//double residual(const Array2D& p, const Array2D& RHS) const;
 	double residual(Discretization& discr) const;
 
 public:
 	Pressure_solver(double eps, double max_it);
-	
+
 	//! run solver
 	//void solver(Array2D& p, const Array2D& RHS)const;
 	void solver(Discretization& discr,
@@ -52,5 +52,5 @@ public:
 	const std::array<double, 2> &bcBottom, const std::array<double, 2> &bcTop,
 	const std::array<double, 2> &bcLeft, const std::array<double, 2> &bcRight,
 	const std::array<bool, 4> &useDirichletBc) const = 0;
-	
+
 };

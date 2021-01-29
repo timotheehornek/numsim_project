@@ -75,7 +75,7 @@ void run_ns(Settings settings, const bool detailed_results)
     //! simulation time setup
     double t{0.0};
 
-    
+
     while (t < settings.endTime) // <= iterate through time span
                                  //while (t==0.0)
     {
@@ -123,14 +123,15 @@ void run_ns(Settings settings, const bool detailed_results)
             discretization->compute_bound_val_obstacle();
 
         //! write results to output every 1/10 s
-        if(output_counter==static_cast<int>(10*t))
+        //if(output_counter==static_cast<int>(10*t))
+        if(output_counter==static_cast<int>(t))
         {
             assert(settings.maximumDt<=.1);
             OWP.writeFile(t);
             //OWT.writeFile(t);
             ++output_counter;
         }
-        
+
 
         //! print variables
         if (detailed_results && t == settings.endTime)
@@ -152,7 +153,7 @@ void run_ns(Settings settings, const bool detailed_results)
                 << discretization->RHS());
         }
     }
-   
+
 }
 
 void run_lbm(Settings settings, const bool detailed_results)
@@ -182,7 +183,7 @@ void run_lbm(Settings settings, const bool detailed_results)
     lattice_boltzmann.set_obstacle_rect(settings.obstaclePos);
     //lattice_boltzmann.set_obstacle_round({ settings.nCells[0] / 4 , settings.nCells[1] / 2}, settings.nCells[1] / 8);
   }
-  
+
   //! simulation time setup
   double t{ 0.0 };
 
@@ -193,7 +194,7 @@ void run_lbm(Settings settings, const bool detailed_results)
   int turn = 1;
 
   //compute viscosity
-  double viscosity = lattice_boltzmann.compute_viscosity(settings.physicalSize[1], settings.useDirichletBc,
+  double viscosity = lattice_boltzmann.compute_viscosity(settings.physicalSize, settings.useDirichletBc,
      settings.bcBottom, settings.bcTop, settings.bcLeft, settings.bcRight);
   //set relaxation parameter
   lattice_boltzmann.set_tau(viscosity);
@@ -203,11 +204,7 @@ void run_lbm(Settings settings, const bool detailed_results)
 
   while (t < settings.endTime) // <= iterate through time span
     {
-      //< alternatively set timestep manually
-      if ((t + lattice_boltzmann.dt()) > settings.endTime)       //< handle last time step
-        lattice_boltzmann.set_dt(settings.endTime - t);
-
-      t += 1.0 *lattice_boltzmann.dt();   // 0.01 needs 900s for vortex street                            //< update current time t
+      t += lattice_boltzmann.dt();     //< update current time t
 
       //! inform user about current time step
       DEBUG_PRINT
@@ -245,7 +242,7 @@ void run_lbm(Settings settings, const bool detailed_results)
        turn = 1;
       }
 
-      //! write one output file every second
+      //! write one output file every seconds
       if (output_counter == static_cast<int>(t))
       {
         ++output_counter;
@@ -255,6 +252,18 @@ void run_lbm(Settings settings, const bool detailed_results)
       //! print variables
       if (detailed_results && t == settings.endTime)
       {
+        /*
+        std::cout << "left boundary:" << '\n';
+        for (size_t j = 0; j < size[1]; j++)
+        {
+          std::cout << "j = " << j << " : " << lattice_boltzmann.u(0,j) << '\n';
+        }
+        std::cout << "right boundary:" << '\n';
+        for (size_t j = 0; j < size[1]; j++)
+        {
+          std::cout << "j = " << j << " : " << lattice_boltzmann.u(size[0] - 1,j) << '\n';
+        }
+        */
           DEBUG_PRINT(
             "Current result overview:\n"
              << "Velocity u:\n" << lattice_boltzmann.u()

@@ -14,7 +14,7 @@ public:
   OutputWriterLBM(Lattice_boltzmann lattice_boltzmann);
 
   //! write current velocities to file, filename is output_<count>.vti
-  virtual void writeFile(double currentTime, Lattice_boltzmann lattice_boltzmann) = 0;
+  virtual void writeFile(double currentTime, const Lattice_boltzmann &lattice_boltzmann) = 0;
 
 protected:
 
