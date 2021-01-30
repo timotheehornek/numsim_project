@@ -474,10 +474,10 @@ void Lattice_boltzmann::boundary_treatment(
 	//std::array<bool, 4> useDirichletBc; //< {bottom, top, left, right}
 	//< type of boundary condition true for Dirichlet and false for Neumann
 
-	double magic_factor = 1.0;
+	double magic_factor = 5.5 * 4.1;//1.0;
 	//magic factor that is sadly different for each test case and leads to the correct inflow velocity for pressure boundaries
 	//the scientific relation behind the factor was not found as it should normally be 1.0 :(
-	//poiseulle.txt -> magic_factor = 4.96
+	//poiseulle.txt -> magic_factor = 4.73
 	//vortex_street_rect_lbm.txt -> magic_factor = 5.5 * 4.1
 
   //get loop size
@@ -498,42 +498,47 @@ void Lattice_boltzmann::boundary_treatment(
 	input[7](i, j) = input[5](i, j);
 
 	//compute buried link
-	f_buried = 1.0 / 18.0 * (input[1](i, j) + input[2](i, j) + input[3](i, j) + input[4](i, j) + input[5](i, j) + input[7](i, j));
-
 	if (!useDirichletBc[3])
 	{//outflow boundary set values according to set density
 		//initialize as outflow
-		double density = 1.0;
+		density = 1.0;
 		//check if inflow - assume full pressure gradient is applied to inflow
 		if (bcRight[0] > bcLeft[0])
 		{
 			density += magic_factor * 3.0 * (bcRight[0] - bcLeft[0]) / (m_nCells[0] * m_lattice_factor);
 		}
-
-		f_buried = density / 18.0 - f_buried;
 	}
 	else if (!useDirichletBc[1])
 	{//outflow boundary set values according to set density
 		//initialize as outflow
-		double density = 1.0;
+		density = 1.0;
 		//check if inflow - assume full pressure gradient is applied to inflow
 		if (bcTop[1] > bcBottom[1])
 		{
 			density += magic_factor * 3.0 * (bcTop[1] - bcBottom[1]) / (m_nCells[1] * m_lattice_factor);
 		}
-
-		f_buried = density / 18.0 - f_buried;
+	}
+	else
+	{
+		if (bcTop[0] > bcRight[0] || bcTop[1] > bcRight[1])
+		{
+			density = compute_rho(i - 1, j, input);
+		}
+		else
+		{
+			density = compute_rho(i, j - 1, input);
+		}
 	}
 
-	input[6](i, j) = f_buried;
-	input[8](i, j) = f_buried;
-	input[0](i, j)= 16.0 * f_buried;
+	input[6](i, j) = 1.0 / 2.0 * (density - (input[1](i, j) + input[2](i, j) + input[3](i, j) + input[4](i, j) + input[5](i, j) + input[7](i, j)));
+	input[8](i, j) = 1.0 / 2.0 * (density - (input[1](i, j) + input[2](i, j) + input[3](i, j) + input[4](i, j) + input[5](i, j) + input[7](i, j)));
 
 	//normal collide step
-	collide(i, j, compute_rho(i,j, input), compute_u(i,j, input), compute_v(i,j, input), input);
+	collide(i, j, density, compute_u(i,j, input), compute_v(i,j, input), input);
 
 	//modified stream step -> send values into domain
 	//send input values to neighbor cells in output vector
+	output[0](i, j) = input[0](i, j);
 	output[3](i - 1, j) = input[3](i, j);
 	output[4](i, j - 1) = input[4](i, j);
 	output[7](i - 1, j - 1) = input[7](i, j);
@@ -550,42 +555,50 @@ void Lattice_boltzmann::boundary_treatment(
 	input[8](i, j) = input[6](i, j);
 
 	//compute buried link
-	f_buried = 1.0 / 18.0 * (input[1](i, j) + input[2](i, j) + input[3](i, j) + input[4](i, j) + input[6](i, j) + input[8](i, j));
-
 	if (!useDirichletBc[2])
 	{//outflow boundary set values according to set density
 		//initialize as outflow
-		double density = 1.0;
+		density = 1.0;
 		//check if inflow - assume full pressure gradient is applied to inflow
 		if (bcLeft[0] > bcRight[0])
 		{
 			density += magic_factor * 3.0 * (bcLeft[0] - bcRight[0]) / (m_nCells[0] * m_lattice_factor);
 		}
-
-	  f_buried = density / 18.0 - f_buried;
 	}
 	else if (!useDirichletBc[1])
 	{//outflow boundary set values according to set density
 		//initialize as outflow
-		double density = 1.0;
+		density = 1.0;
 		//check if inflow - assume full pressure gradient is applied to inflow
 		if (bcTop[1] > bcBottom[1])
 		{
 			density += magic_factor * 3.0 * (bcTop[1] - bcBottom[1]) / (m_nCells[1] * m_lattice_factor);
 		}
-
-		f_buried = density / 18.0 - f_buried;
+	}
+	else
+	{//velocity boundary
+		//check if top ot left boundary acts as inflow
+		if (bcTop[0] > bcLeft[0] || bcTop[1] > bcLeft[1])
+		{
+			//use density of right neighbor
+			density = compute_rho(i + 1, j, input);
+		}
+		else
+		{
+			//use density of bottom neighbor
+			density = compute_rho(i, j - 1, input);
+		}
 	}
 
-	input[5](i, j) = f_buried;
-	input[7](i, j) = f_buried;
-	input[0](i, j)= 16.0 * f_buried;
+	input[5](i, j) = 1.0 / 2.0 * (density - (input[1](i, j) + input[2](i, j) + input[3](i, j) + input[4](i, j) + input[6](i, j) + input[8](i, j)));
+	input[7](i, j) = 1.0 / 2.0 * (density - (input[1](i, j) + input[2](i, j) + input[3](i, j) + input[4](i, j) + input[6](i, j) + input[8](i, j)));
 
 	//normal collide step
-	collide(i, j, compute_rho(i,j, input), compute_u(i,j, input), compute_v(i,j, input), input);
+	collide(i, j, density, compute_u(i,j, input), compute_v(i,j, input), input);
 
 	//modified stream step -> send values into domain
 	//send input values to neighbor cells in output vector
+	output[0](i, j) = input[0](i, j);
 	output[1](i + 1, j) = input[1](i, j);
 	output[4](i, j - 1) = input[4](i, j);
 	output[8](i + 1, j - 1) = input[8](i, j);
@@ -601,43 +614,50 @@ void Lattice_boltzmann::boundary_treatment(
 	input[5](i, j) = input[7](i, j);
 
 	//compute buried link
-	f_buried = 1.0 / 18.0 * (input[1](i, j) + input[2](i, j) + input[3](i, j) + input[4](i, j) + input[5](i, j) + input[7](i, j));
-
 	if (!useDirichletBc[2])
 	{//outflow boundary set values according to set density
 		//initialize as outflow
-		double density = 1.0;
+		density = 1.0;
 		//check if inflow - assume full pressure gradient is applied to inflow
 		if (bcLeft[0] > bcRight[0])
 		{
 			density += magic_factor * 3.0 * (bcLeft[0] - bcRight[0]) / (m_nCells[0] * m_lattice_factor);
 		}
-
-	  f_buried = density / 18.0 - f_buried;
 	}
 	else if (!useDirichletBc[0])
 	{//outflow boundary set values according to set density
 		//initialize as outflow
-		double density = 1.0;
+		density = 1.0;
 		//check if inflow - assume full pressure gradient is applied to inflow
 		if (bcBottom[1] > bcTop[1])
 		{
 			density += magic_factor * 3.0 * (bcBottom[1] - bcTop[1]) / (m_nCells[1] * m_lattice_factor);
 		}
-
-
-		f_buried = density / 18.0 - f_buried;
+	}
+	else
+	{//velocity boundary
+		//check if bottom or left boundary acts as inflow
+		if (bcBottom[0] > bcRight[0] || bcBottom[1] > bcRight[1])
+		{
+			//use density of right neighbor
+			density = compute_rho(i + 1, j, input);
+		}
+		else
+		{
+			//use density of top neighbor
+			density = compute_rho(i, j + 1, input);
+		}
 	}
 
-	input[6](i, j) = f_buried;
-	input[8](i, j) = f_buried;
-	input[0](i,j)= 16.0 * f_buried;
+	input[6](i, j) = 1.0 / 2.0 * (density - (input[1](i, j) + input[2](i, j) + input[3](i, j) + input[4](i, j) + input[5](i, j) + input[7](i, j)));
+	input[8](i, j) = 1.0 / 2.0 * (density - (input[1](i, j) + input[2](i, j) + input[3](i, j) + input[4](i, j) + input[5](i, j) + input[7](i, j)));
 
 	//normal collide step
-	collide(i, j, compute_rho(i,j, input), compute_u(i,j, input), compute_v(i,j, input), input);
+	collide(i, j, density, compute_u(i,j, input), compute_v(i,j, input), input);
 
 	//modified stream step -> send values into domain
 	//send input values to neighbor cells in output vector
+	output[0](i, j) = input[0](i, j);
 	output[1](i + 1, j) = input[1](i, j);
 	output[2](i, j + 1) = input[2](i, j);
 	output[5](i + 1, j + 1) = input[5](i, j);
@@ -654,42 +674,50 @@ void Lattice_boltzmann::boundary_treatment(
 	input[6](i, j) = input[8](i, j);
 
 	//compute buried link
-	f_buried = 1.0 / 18.0 * (input[1](i, j) + input[2](i, j) + input[3](i, j) + input[4](i, j) + input[6](i, j) + input[8](i, j));
-
 	if (!useDirichletBc[3])
 	{//outflow boundary set values according to set density
 		//initialize as outflow
-		double density = 1.0;
+		density = 1.0;
 		//check if inflow - assume full pressure gradient is applied to inflow
 		if (bcRight[0] > bcLeft[0])
 		{
 			density += magic_factor * 3.0 * (bcRight[0] - bcLeft[0]) / (m_nCells[0] * m_lattice_factor);
 		}
-
-		f_buried = density / 18.0 - f_buried;
 	}
 	else if (!useDirichletBc[0])
 	{//outflow boundary set values according to set density
 		//initialize as outflow
-		double density = 1.0;
+ 		density = 1.0;
 		//check if inflow - assume full pressure gradient is applied to inflow
 		if (bcBottom[1] > bcTop[1])
 		{
 			density += magic_factor * 3.0 * (bcBottom[1] - bcTop[1]) / (m_nCells[1] * m_lattice_factor);
 		}
-
-		f_buried = density / 18.0 - f_buried;
+	}
+	else
+	{//velocity boundary
+		//check if bottom or right boundary acts as inflow
+		if (bcBottom[0] > bcRight[0] || bcBottom[1] > bcRight[1])
+		{
+			//use density of left neighbor
+			density = compute_rho(i - 1, j, input);
+		}
+		else
+		{
+			//use density of top neighbor
+			density = compute_rho(i, j + 1, input);
+		}
 	}
 
-	input[5](i, j) = f_buried;
-	input[7](i, j) = f_buried;
-	input[0](i,j)= 16.0 * f_buried;
+	input[5](i, j) = 1.0 / 2.0 * (density - (input[1](i, j) + input[2](i, j) + input[3](i, j) + input[4](i, j) + input[6](i, j) + input[8](i, j)));
+	input[7](i, j) = 1.0 / 2.0 * (density - (input[1](i, j) + input[2](i, j) + input[3](i, j) + input[4](i, j) + input[6](i, j) + input[8](i, j)));
 
 	//normal collide step
-	collide(i, j, compute_rho(i,j, input), compute_u(i,j, input), compute_v(i,j, input), input);
+	collide(i, j, density, compute_u(i,j, input), compute_v(i,j, input), input);
 
 	//modified stream step -> send values into domain
 	//send input values to neighbor cells in output vector
+	output[0](i, j) = input[0](i, j);
 	output[2](i, j + 1) = input[2](i, j);
 	output[3](i - 1, j) = input[3](i, j);
 	output[6](i - 1, j + 1) = input[6](i, j);
@@ -796,9 +824,7 @@ void Lattice_boltzmann::boundary_treatment(
 
 		//normal collide step
 		collide(i, j, compute_rho(i,j, input), vel_u_left, vel_v_left, input);
-		/*
 
-		*/
 		//modified stream step -> send values into domain
 		//send input values to neighbor cells in output vector
 		output[0](i, j) = input[0](i, j);
@@ -839,7 +865,7 @@ void Lattice_boltzmann::boundary_treatment(
 		else
 		{//Dirichlet -- inflow or no-slip boundary
 			vel_u_top = bcTop[0];
-			vel_v_top = bcTop[1];// * i * (size_x - 1 - i); //velocity profile doesnt work xD
+			vel_v_top = bcTop[1];
 		}
 
 		//set correction terms
@@ -895,7 +921,7 @@ void Lattice_boltzmann::boundary_treatment(
 		else
 		{//Dirichlet -- inflow or no-slip boundary
 			vel_u_bottom = bcBottom[0];
-			vel_v_bottom = bcBottom[1]; // * i * (size_x - 1 - i); //velocity profile doesnt work xD
+			vel_v_bottom = bcBottom[1]; 
 		}
 
 		//set correction terms
