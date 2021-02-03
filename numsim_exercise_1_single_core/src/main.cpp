@@ -132,9 +132,6 @@ void run_ns(Settings settings, const bool detailed_results)
             //OWT.writeFile(t);
             ++output_counter;
         }
-=======
-
->>>>>>> lexi_new
 
         //! print variables
         if (detailed_results && t == settings.endTime)
@@ -410,10 +407,6 @@ void run_ns(Settings settings, const bool detailed_results)
             //OWT.writeFile(t);
             ++output_counter;
         }
-<<<<<<<-master
-=======
-
->>>>>>> lexi_new
 
         //! print variables
         if (detailed_results && t == settings.endTime)
