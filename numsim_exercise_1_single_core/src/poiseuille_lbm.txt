@@ -1,5 +1,5 @@
 # Settings file for numsim program
-# Run ./numsim poiseulle.txt
+# Run ./numsim poiseuille.txt
 
 # Problem description
 physicalSizeX = 4.0  # physical size of the domain
