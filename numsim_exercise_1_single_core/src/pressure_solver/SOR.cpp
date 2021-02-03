@@ -3,7 +3,6 @@
 SOR::SOR(double eps, double max_it, double w)
 	: Pressure_solver(eps, max_it), m_w{w} {}
 
-//void SOR::run_it_step(Array2D& p, const Array2D& RHS, const std::array<int, 2> size) const
 void SOR::run_it_step(Discretization &discr,
 					  const std::array<double, 2> &bcBottom, const std::array<double, 2> &bcTop,
 					  const std::array<double, 2> &bcLeft, const std::array<double, 2> &bcRight,
@@ -51,22 +50,6 @@ void SOR::run_it_step(Discretization &discr,
 	else //< Dirichlet for pressure
 		for (int i{0}; i < discr.p().size()[0]; ++i)
 			discr.p_ref(i, discr.p().size()[1] - 1) = 2 * bcTop[1] - discr.p(i, discr.p().size()[1] - 2);
-	/*
-	//! update boundary values on left and right
-	//if (!m_p_0_boundary[LEFT])
-		for (int j{ 1 }; j < discr.p().size()[1] - 1; ++j)
-			discr.p_ref(0, j) =1.-discr.p(1, j);//discr.p(1, j);
-	//if (!m_p_0_boundary[RIGHT])
-		for (int j{ 1 }; j < discr.p().size()[1] - 1; ++j)
-			discr.p_ref(discr.p().size()[0] - 1, j) = -discr.p(discr.p().size()[0] - 2, j);//discr.p(discr.p().size()[0] - 2, j);
-
-	//! update boundary values on bottom and top
-	//if (!m_p_0_boundary[BOTTOM])
-		for (int i{ 0 }; i < discr.p().size()[0] ; ++i)
-			discr.p_ref(i, 0) = discr.p(i, 1);
-	//if (!m_p_0_boundary[TOP])
-		for (int i{ 0 }; i < discr.p().size()[0] ; ++i)
-			discr.p_ref(i, discr.p().size()[1] - 1) = discr.p(i, discr.p().size()[1] - 2);*/
 
 	//! update boundary values around obstacle
 	if (discr.obstacle_exist())

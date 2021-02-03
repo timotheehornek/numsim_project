@@ -143,6 +143,8 @@ void Settings::loadFromFile(const std::string &filename)
 					epsilon = std::stod(parameter_value_string);
 				else if (parameter_name == "maximumNumberOfIterations")
 					maximumNumberOfIterations = static_cast<int>(std::stod(parameter_value_string));
+				else if (parameter_name == "magicFactor")
+					magicFactor = std::stod(parameter_value_string);
 			}
 		}
 		settings.close();
