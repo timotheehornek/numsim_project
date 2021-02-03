@@ -11,7 +11,7 @@ OutputWriterParaviewLBM::OutputWriterParaviewLBM(Lattice_boltzmann lattice_boltz
   vtkWriter_ = vtkSmartPointer<vtkXMLImageDataWriter>::New();
 }
 
-void OutputWriterParaviewLBM::writeFile(double currentTime, Lattice_boltzmann lattice_boltzmann)
+void OutputWriterParaviewLBM::writeFile(double currentTime, const Lattice_boltzmann &lattice_boltzmann)
 {
   // Assemble the filename
   std::stringstream fileName;

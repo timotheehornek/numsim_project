@@ -64,7 +64,7 @@ public:
   void set_tau_manually(double tau);
 
  //! compute the viscosity of the fluid - relevant for setting tau
-  double compute_viscosity(double length, const std::array<bool, 4>& useDirichletBc,
+  double compute_viscosity(const std::array<double, 2>& size, const std::array<bool, 4>& useDirichletBc,
   		const std::array<double, 2>& bcBottom, const std::array<double, 2>& bcTop,
   		const std::array<double, 2>& bcLeft, const std::array<double, 2>& bcRight);
 

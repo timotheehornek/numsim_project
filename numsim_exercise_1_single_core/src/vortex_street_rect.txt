@@ -39,8 +39,8 @@ obstUpRiX = 45        # upper right x coordinate of obstacle
 obstUpRiY = 25        # upper right y coordinate of obstacle
 
 # Discretization parameters
-nCellsX = 160#640         # number of cells in x and y direction
-nCellsY = 41#160
+nCellsX = 640         # number of cells in x and y direction
+nCellsY = 160
 useDonorCell = true   # if donor cell discretization should be used, possible values: true false
 alpha = 0.5           # factor for donor-cell scheme, 0 is equivalent to central differences
 tau = 0.5             # safety factor for time step width

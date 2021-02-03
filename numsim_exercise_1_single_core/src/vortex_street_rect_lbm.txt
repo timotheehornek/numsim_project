@@ -2,11 +2,11 @@
 # Run ./numsim vortex_street_rect_lbm.txt
 
 # Problem description
-physicalSizeX = 64.0  # physical size of the domain
-physicalSizeY = 16.0
-endTime = 1500.0      # duration of the simulation
-re = 350              # Reynolds number
-gX = 0.0              # external forces, set to (gX,gY) = (0,-9.81) to account for gravity
+physicalSizeX = 4.0  # physical size of the domain
+physicalSizeY = 1.0
+endTime = 20.0      # duration of the simulation
+re = 350            #300 for velocity inlet     # Reynolds number
+gX = 0.0            # external forces, set to (gX,gY) = (0,-9.81) to account for gravity
 gY = 0.0
 
 # Simulation type (Navier-Stokes or Lattice-Boltzmann)
@@ -19,14 +19,14 @@ navierStokes = false
 #   => can be used for: OUTFLOW velocities + Dirichlet pressure
 useDirichletBcBottom = true
 useDirichletBcTop    = true
-useDirichletBcLeft   = false
+useDirichletBcLeft   = false #true for velocity inlet -> u_max = 0.09
 useDirichletBcRight  = false
 # Dirichlet boundary condition values (only relevant ones will be used)
 bcBottomX = 0         # Dirichlet velocity
 bcBottomY = 0         # Dirichlet velocity/pressure
 bcTopX    = 0         # Dirichlet velocity
 bcTopY    = 0         # Dirichlet velocity/pressure
-bcLeftX   = .00002    # Dirichlet velocity/pressure
+bcLeftX   = 0.09 #->u_max = 0.1102   # Dirichlet velocity/pressure
 bcLeftY   = 0         # Dirichlet velocity
 bcRightX  = 0         # Dirichlet velocity/pressure
 bcRightY  = 0         # Dirichlet velocity
@@ -39,8 +39,8 @@ obstUpRiX = 90        # upper right x coordinate of obstacle
 obstUpRiY = 50        # upper right y coordinate of obstacle
 
 # Discretization parameters
-nCellsX = 320         # number of cells in x and y direction
-nCellsY = 80
+nCellsX = 324         # number of cells in x and y direction
+nCellsY = 81
 useDonorCell = true   # if donor cell discretization should be used, possible values: true false
 alpha = 0.5           # factor for donor-cell scheme, 0 is equivalent to central differences
 tau = 0.5             # safety factor for time step width
