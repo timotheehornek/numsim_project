@@ -19,6 +19,7 @@ add_executable(${PROJECT_NAME}
    pressure_solver/pressure_solver.cpp
 #   pressure_solver/gauss_seidel.cpp
    pressure_solver/SOR.cpp
+   pressure_solver/CG.cpp
    lattice_boltzmann/lattice_boltzmann.cpp
    output_writer/output_writer_paraview_lbm.cpp
    output_writer/output_writer_lbm.cpp

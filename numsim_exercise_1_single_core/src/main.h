@@ -17,6 +17,7 @@
 #include "pressure_solver/pressure_solver.h"
 #include "settings_parser/settings.h"
 #include "pressure_solver/SOR.h"
+#include "pressure_solver/CG.h"
 #include "discretization/staggered_grid.h"
 #include "lattice_boltzmann/lattice_boltzmann.h"
 #include "output_writer/output_writer_paraview_lbm.h"

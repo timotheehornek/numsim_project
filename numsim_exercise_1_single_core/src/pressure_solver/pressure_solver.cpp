@@ -35,30 +35,66 @@ double Pressure_solver::residual(Discretization &discr) const
 	return std::pow(residual / N, .5);
 }
 
-//! implementation of pressure solver
-void Pressure_solver::solver(Discretization &discr,
-							 const std::array<double, 2> &bcBottom, const std::array<double, 2> &bcTop,
-							 const std::array<double, 2> &bcLeft, const std::array<double, 2> &bcRight,
-							 const std::array<bool, 4> &useDirichletBc) const
+void Pressure_solver::update_boundaries(Discretization& discr,
+    const std::array<double, 2> &bcBottom, const std::array<double, 2> &bcTop,
+    const std::array<double, 2> &bcLeft, const std::array<double, 2> &bcRight,
+    const std::array<bool, 4> &useDirichletBc) const
 {
-	//! get array size
-	std::array<int, 2> size = discr.p().size();
-	assert(discr.p().size() == discr.RHS().size());
+  //! update boundary values on left and right
+	if (useDirichletBc[LEFT]) //< Neuman for pressure
+		for (int j{1}; j < discr.p().size()[1] - 1; ++j)
+			discr.p_ref(0, j) = discr.p(1, j);
+	else //< Dirichlet for pressure
+		for (int j{1}; j < discr.p().size()[1] - 1; ++j)
+			discr.p_ref(0, j) = 2 * bcLeft[0] - discr.p(1, j);
+	if (useDirichletBc[RIGHT]) //< Neuman for pressure
+		for (int j{1}; j < discr.p().size()[1] - 1; ++j)
+			discr.p_ref(discr.p().size()[0] - 1, j) = discr.p(discr.p().size()[0] - 2, j);
+	else //< Dirichlet for pressure
+		for (int j{1}; j < discr.p().size()[1] - 1; ++j)
+			discr.p_ref(discr.p().size()[0] - 1, j) = 2 * bcRight[0] - discr.p(discr.p().size()[0] - 2, j);
 
-	//! initialize iterations
-	double res{residual(discr)};
-	int it_counter{0};
-	do
+	//! update boundary values on bottom and top
+	if (useDirichletBc[BOTTOM]) //< Neuman for pressure
+		for (int i{0}; i < discr.p().size()[0]; ++i)
+			discr.p_ref(i, 0) = discr.p(i, 1);
+	else //< Dirichlet for pressure
+		for (int i{0}; i < discr.p().size()[0]; ++i)
+			discr.p_ref(i, 0) = 2 * bcBottom[1] - discr.p(i, 1);
+	if (useDirichletBc[TOP]) //< Neuman for pressure
+		for (int i{0}; i < discr.p().size()[0]; ++i)
+			discr.p_ref(i, discr.p().size()[1] - 1) = discr.p(i, discr.p().size()[1] - 2);
+	else //< Dirichlet for pressure
+		for (int i{0}; i < discr.p().size()[0]; ++i)
+			discr.p_ref(i, discr.p().size()[1] - 1) = 2 * bcTop[1] - discr.p(i, discr.p().size()[1] - 2);
+
+	//! update boundary values around obstacle
+	if (discr.obstacle_exist())
 	{
-		run_it_step(discr, bcBottom, bcTop, bcLeft, bcRight, useDirichletBc);
-		res = residual(discr);
-		++it_counter;
-	} while (res > m_eps && it_counter < m_max_it);
+		// top + bottom (without corners)
+		for (int i{discr.obstacle_pos(0) + 2}; i <= discr.obstacle_pos(2); ++i)
+		{
+			// top
+			discr.p_ref(i, discr.obstacle_pos(3) + 1) = discr.p(i, discr.obstacle_pos(3) + 2);
 
-	if (it_counter == m_max_it)
-		std::cout << "max_it reached\n";
-	DEBUG_PRINT(
-		"Pressure solver terminated:\n"
-		<< "\tCurrent iteration: " << it_counter << "\t\tCurrent residual: " << res << '\n'
-		<< "\t   Max iterations: " << m_max_it << "\t    Max residual: " << m_eps);
+			// bottom
+			discr.p_ref(i, discr.obstacle_pos(1) + 1) = discr.p(i, discr.obstacle_pos(1));
+		}
+
+		// left + right (without corners)
+		for (int j{discr.obstacle_pos(1) + 2}; j <= discr.obstacle_pos(3); ++j)
+		{
+			// left
+			discr.p_ref(discr.obstacle_pos(0) + 1, j) = discr.p(discr.obstacle_pos(0), j);
+
+			// right
+			discr.p_ref(discr.obstacle_pos(2) + 1, j) = discr.p(discr.obstacle_pos(2) + 2, j);
+		}
+
+		// boundary corners
+		discr.p_ref(discr.obstacle_pos(0) + 1, discr.obstacle_pos(1) + 1) = .5 * (discr.p(discr.obstacle_pos(0), discr.obstacle_pos(1) + 1) + discr.p(discr.obstacle_pos(0) + 1, discr.obstacle_pos(1)));
+		discr.p_ref(discr.obstacle_pos(2) + 1, discr.obstacle_pos(1) + 1) = .5 * (discr.p(discr.obstacle_pos(2) + 2, discr.obstacle_pos(1) + 1) + discr.p(discr.obstacle_pos(2) + 1, discr.obstacle_pos(1)));
+		discr.p_ref(discr.obstacle_pos(2) + 1, discr.obstacle_pos(3) + 1) = .5 * (discr.p(discr.obstacle_pos(2) + 2, discr.obstacle_pos(3) + 1) + discr.p(discr.obstacle_pos(2) + 1, discr.obstacle_pos(3) + 2));
+		discr.p_ref(discr.obstacle_pos(0) + 1, discr.obstacle_pos(3) + 1) = .5 * (discr.p(discr.obstacle_pos(0), discr.obstacle_pos(3) + 1) + discr.p(discr.obstacle_pos(0) + 1, discr.obstacle_pos(3) + 2));
+	}
 }

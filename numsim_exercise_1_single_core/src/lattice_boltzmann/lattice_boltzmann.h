@@ -7,8 +7,6 @@
 #include <cmath>
 #include <iostream>
 
-//#define DEBUG_PRINT(x) do { std::cout << x << '\n'; } while (0)
-
 class Lattice_boltzmann
 {
 protected:
@@ -24,7 +22,10 @@ protected:
 
   const double m_re;
 
-  const double m_lattice_factor;
+  const double m_lattice_factor { 1.0 };
+  const double m_time_factor { 0.01 };
+  const double m_magic_factor;
+
   double m_one_over_tau{ 1.0 }; //< run set_tau to initialize
 
   const std::array<double, 2> m_g;
@@ -49,7 +50,8 @@ protected:
 
 public:
   //! construct the object with given number of cells in x and y direction
-	Lattice_boltzmann(const std::array<int, 2>& nCells, const std::array<double, 2>& physicalSize, const double re, const std::array<double, 2>& g);
+	Lattice_boltzmann(const std::array<int, 2>& nCells, const std::array<double, 2>& physicalSize, const double re,
+    const double magicFactor, const std::array<double, 2>& g);
 
 	//! set dt without checking stability conditions
 	void set_dt(double dt_max);

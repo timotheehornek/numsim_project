@@ -57,10 +57,21 @@ void run_ns(Settings settings, const bool detailed_results)
   int output_counter{0}; //< counter to keep track of output times
 
   //! initialize pressure solver
-
   std::shared_ptr<Pressure_solver> pressure_solver;
-  pressure_solver = std::make_shared<SOR>(
-      settings.epsilon, settings.maximumNumberOfIterations, settings.omega);
+  //! setup pressure sover implementation
+  if (settings.pressureSolver == "SOR")
+    pressure_solver = std::make_shared<SOR>(
+        settings.epsilon, settings.maximumNumberOfIterations, settings.omega);
+  else
+  {
+    pressure_solver = std::make_shared<CG>(
+        settings.epsilon, settings.maximumNumberOfIterations, settings.nCells);
+    //! set boundary conditions in p
+    pressure_solver->update_boundaries(*discretization,
+                                       settings.bcBottom, settings.bcTop,
+                                       settings.bcLeft, settings.bcRight,
+                                       settings.useDirichletBc);
+  }
 
   //! load boundaries for velocities u and v
   discretization->setup_bound_val_uv(
@@ -159,7 +170,7 @@ void run_lbm(Settings settings, const bool detailed_results)
   //! initialize lattice_boltzmann
   Lattice_boltzmann lattice_boltzmann{
       settings.nCells, settings.physicalSize,
-      settings.re, settings.g};
+      settings.re, settings.magicFactor, settings.g};
 
   //! setup ouput writer
   std::array<double, 2> meshWidth = {lattice_boltzmann.dx(), lattice_boltzmann.dy()};
